@@ -22,6 +22,7 @@ describe('MovieGrid', () => {
 
     expect(screen.getByTestId('grid-skeleton')).toBeInTheDocument();
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
+    expect(screen.getByRole('status', { name: /loading/i })).toBeInTheDocument();
   });
 
   it('renders an empty state with a clear-filters action', async () => {
@@ -60,6 +61,7 @@ describe('MovieGrid', () => {
     expect(link).toHaveAttribute('href', '/movie/550?region=NL');
     expect(screen.getByText('1999')).toBeInTheDocument();
     expect(screen.getByText('8.4')).toBeInTheDocument();
+    expect(screen.getByLabelText(/rating 8\.4 out of 10/i)).toBeInTheDocument();
   });
 
   it('shows a load-more button when another page exists', () => {

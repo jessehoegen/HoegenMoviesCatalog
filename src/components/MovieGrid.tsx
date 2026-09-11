@@ -21,15 +21,26 @@ const GRID_CLASSES =
 
 function GridSkeleton() {
   return (
-    <div className={GRID_CLASSES} data-testid="grid-skeleton" aria-busy="true">
-      {Array.from({ length: 12 }, (_, index) => (
-        <div key={index}>
-          {/* Skeletons match the card shape so the layout does not jump. */}
-          <div className="aspect-[2/3] w-full animate-pulse rounded-lg bg-neutral-800" />
-          <div className="mt-2 h-4 w-3/4 animate-pulse rounded bg-neutral-800" />
-        </div>
-      ))}
-    </div>
+    <>
+      {/*
+        aria-busy alone is not reliably announced (WCAG 4.1.3), so a separate
+        visually-hidden live region carries the loading announcement. It is a
+        sibling of the skeleton grid, not wrapped around it — a status region
+        wrapping twelve placeholder divs would announce their churn instead.
+      */}
+      <span role="status" aria-label="Loading movies…" className="sr-only">
+        Loading movies…
+      </span>
+      <div className={GRID_CLASSES} data-testid="grid-skeleton" aria-busy="true">
+        {Array.from({ length: 12 }, (_, index) => (
+          <div key={index}>
+            {/* Skeletons match the card shape so the layout does not jump. */}
+            <div className="aspect-[2/3] w-full animate-pulse rounded-lg bg-neutral-800" />
+            <div className="mt-2 h-4 w-3/4 animate-pulse rounded bg-neutral-800" />
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 
