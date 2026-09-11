@@ -13,10 +13,25 @@ type MovieListResult = UseInfiniteQueryResult<InfiniteData<MoviePage>, Error>;
 
 const FIVE_MINUTES = 5 * 60 * 1000;
 
+// TMDB's real discover/search endpoints re-rank between requests (popularity
+// shifts in near-real-time), so the same movie can legitimately appear on two
+// consecutive pages during a single scroll session — MSW fixtures never do
+// this, since each mocked page is static. Dedupe by id, keeping the first
+// occurrence: a movie that drifted to a later page should stay wherever the
+// user already saw it, not jump position mid-scroll.
 export function flattenPages(
   data: InfiniteData<MoviePage> | undefined,
 ): TmdbMovieSummary[] {
-  return data?.pages.flatMap((page) => page.results) ?? [];
+  const seen = new Set<number>();
+  const deduped: TmdbMovieSummary[] = [];
+  for (const page of data?.pages ?? []) {
+    for (const movie of page.results) {
+      if (seen.has(movie.id)) continue;
+      seen.add(movie.id);
+      deduped.push(movie);
+    }
+  }
+  return deduped;
 }
 
 export function useDiscoverMovies(filters: BrowseFilters): MovieListResult {

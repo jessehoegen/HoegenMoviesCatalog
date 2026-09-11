@@ -105,6 +105,43 @@ describe('useDiscoverMovies', () => {
   it('flattenPages returns an empty array when there is no data', () => {
     expect(flattenPages(undefined)).toEqual([]);
   });
+
+  it('dedupes a movie that TMDB returns on two consecutive pages', async () => {
+    // Real TMDB re-ranks by popularity between requests, so a movie can drift
+    // across a page boundary and appear in both page 1 and page 2 — this is
+    // what page-1-then-page-2 overlap looked like when it was observed
+    // against the live API, not a contrived within-page duplicate.
+    const driftedMovie = movieSummaryFixture({ id: 299536, title: 'Drifted Movie' });
+
+    server.use(
+      http.get('https://api.themoviedb.org/3/discover/movie', ({ request }) => {
+        const page = Number(new URL(request.url).searchParams.get('page'));
+        const results =
+          page === 1
+            ? [movieSummaryFixture({ id: 1, title: 'Movie 1' }), driftedMovie]
+            : [driftedMovie, movieSummaryFixture({ id: 2, title: 'Movie 2' })];
+        return HttpResponse.json({ page, results, total_pages: 3, total_results: 4 });
+      }),
+    );
+
+    const { result } = renderHook(() => useDiscoverMovies(baseFilters), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(flattenPages(result.current.data)).toHaveLength(2);
+
+    await act(async () => {
+      await result.current.fetchNextPage();
+    });
+
+    await waitFor(() => expect(flattenPages(result.current.data)).toHaveLength(3));
+    const flattened = flattenPages(result.current.data);
+    expect(flattened.filter((movie) => movie.id === 299536)).toHaveLength(1);
+    expect(flattened.map((movie) => movie.title)).toEqual([
+      'Movie 1',
+      'Drifted Movie',
+      'Movie 2',
+    ]);
+  });
 });
 
 describe('useSearchMovies', () => {
