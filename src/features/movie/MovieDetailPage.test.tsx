@@ -55,7 +55,9 @@ describe('MovieDetailPage', () => {
 
     renderDetail('/movie/550?region=NL');
 
-    expect(await screen.findByRole('heading', { name: 'Fight Club' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Fight Club' }),
+    ).toBeInTheDocument();
     expect(seenAppend).toBe('watch/providers');
     expect(screen.getByText('139 min')).toBeInTheDocument();
     expect(screen.getByText('Drama')).toBeInTheDocument();
@@ -82,14 +84,19 @@ describe('MovieDetailPage', () => {
 
     renderDetail('/movie/550?region=NL');
 
-    expect(await screen.findByText(/not streaming on any subscription service/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/not streaming on any subscription service/i),
+    ).toBeInTheDocument();
   });
 
   it('renders a not-found view for a 404 rather than an error view', async () => {
     server.use(
       http.get('https://api.themoviedb.org/3/movie/999999', () =>
         HttpResponse.json(
-          { status_code: 34, status_message: 'The resource you requested could not be found.' },
+          {
+            status_code: 34,
+            status_message: 'The resource you requested could not be found.',
+          },
           { status: 404 },
         ),
       ),

@@ -16,7 +16,10 @@ export function posterUrl(path: string | null, size: PosterSize = 'w342'): strin
   return buildUrl(path, size);
 }
 
-export function backdropUrl(path: string | null, size: BackdropSize = 'w1280'): string | null {
+export function backdropUrl(
+  path: string | null,
+  size: BackdropSize = 'w1280',
+): string | null {
   return buildUrl(path, size);
 }
 

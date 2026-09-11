@@ -84,7 +84,9 @@ export function FilterBar({ filters, updateFilters }: FilterBarProps) {
                   key={genre.id}
                   type="button"
                   aria-pressed={active}
-                  onClick={() => updateFilters({ genres: toggleId(filters.genres, genre.id) })}
+                  onClick={() =>
+                    updateFilters({ genres: toggleId(filters.genres, genre.id) })
+                  }
                   className={`rounded-full border px-3 py-1 text-sm ${
                     active
                       ? 'border-neutral-100 bg-neutral-100 text-neutral-900'
@@ -107,7 +109,8 @@ export function FilterBar({ filters, updateFilters }: FilterBarProps) {
               min={1874}
               onChange={(event) =>
                 updateFilters({
-                  from: event.target.value === '' ? undefined : Number(event.target.value),
+                  from:
+                    event.target.value === '' ? undefined : Number(event.target.value),
                 })
               }
               className="w-24 rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-neutral-100"
@@ -139,7 +142,8 @@ export function FilterBar({ filters, updateFilters }: FilterBarProps) {
               step={0.5}
               onChange={(event) =>
                 updateFilters({
-                  rating: event.target.value === '' ? undefined : Number(event.target.value),
+                  rating:
+                    event.target.value === '' ? undefined : Number(event.target.value),
                 })
               }
               className="w-24 rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-neutral-100"
@@ -150,7 +154,9 @@ export function FilterBar({ filters, updateFilters }: FilterBarProps) {
             <span className="mb-1 block">Sort by</span>
             <select
               value={filters.sort}
-              onChange={(event) => updateFilters({ sort: event.target.value as SortOption })}
+              onChange={(event) =>
+                updateFilters({ sort: event.target.value as SortOption })
+              }
               className="rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-neutral-100"
             >
               {SORT_OPTIONS.map((option) => (

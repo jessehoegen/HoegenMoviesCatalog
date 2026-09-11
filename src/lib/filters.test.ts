@@ -68,7 +68,9 @@ describe('parseFilters', () => {
 
   it('parses a fully populated query string', () => {
     const filters = parseFilters(
-      params('region=US&providers=8|337&genres=28|35&from=2010&to=2019&rating=7&sort=vote_average.desc'),
+      params(
+        'region=US&providers=8|337&genres=28|35&from=2010&to=2019&rating=7&sort=vote_average.desc',
+      ),
       vocabulary,
       'nl-NL',
     );
@@ -85,7 +87,11 @@ describe('parseFilters', () => {
   });
 
   it('drops unknown genre and provider ids', () => {
-    const filters = parseFilters(params('genres=28|9999&providers=8|4242'), vocabulary, 'nl-NL');
+    const filters = parseFilters(
+      params('genres=28|9999&providers=8|4242'),
+      vocabulary,
+      'nl-NL',
+    );
 
     expect(filters.genres).toEqual([28]);
     expect(filters.providers).toEqual([8]);
@@ -116,7 +122,11 @@ describe('parseFilters', () => {
   });
 
   it('discards out-of-range years and ratings', () => {
-    const filters = parseFilters(params('from=1500&to=abc&rating=99'), vocabulary, 'nl-NL');
+    const filters = parseFilters(
+      params('from=1500&to=abc&rating=99'),
+      vocabulary,
+      'nl-NL',
+    );
 
     expect(filters.from).toBeUndefined();
     expect(filters.to).toBeUndefined();
@@ -178,7 +188,9 @@ describe('serialiseFilters', () => {
       sort: 'vote_average.desc' as const,
     };
 
-    expect(parseFilters(serialiseFilters(original), vocabulary, 'nl-NL')).toEqual(original);
+    expect(parseFilters(serialiseFilters(original), vocabulary, 'nl-NL')).toEqual(
+      original,
+    );
   });
 });
 
@@ -211,7 +223,14 @@ describe('toDiscoverParams', () => {
 
   it('expands years into full ISO dates', () => {
     const result = toDiscoverParams(
-      { region: 'NL', providers: [], genres: [], from: 2010, to: 2019, sort: DEFAULT_SORT },
+      {
+        region: 'NL',
+        providers: [],
+        genres: [],
+        from: 2010,
+        to: 2019,
+        sort: DEFAULT_SORT,
+      },
       1,
     );
 

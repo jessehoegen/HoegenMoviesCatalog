@@ -39,9 +39,7 @@ describe('Layout', () => {
     // fallback RegionPicker renders while `useRegions()` is pending — that
     // fallback's value already equals the URL region ('NL'), so asserting
     // on value alone would pass before the list (and its 'US' option) exists.
-    await waitFor(() =>
-      expect(screen.getByLabelText(/region/i)).not.toBeDisabled(),
-    );
+    await waitFor(() => expect(screen.getByLabelText(/region/i)).not.toBeDisabled());
     expect(screen.getByLabelText(/region/i)).toHaveValue('NL');
 
     await userEvent.selectOptions(screen.getByLabelText(/region/i), 'US');

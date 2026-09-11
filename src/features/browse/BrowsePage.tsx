@@ -22,7 +22,8 @@ export function BrowsePage() {
       label:
         providers?.find((provider) => provider.provider_id === id)?.provider_name ??
         `Provider ${id}`,
-      remove: () => updateFilters({ providers: filters.providers.filter((p) => p !== id) }),
+      remove: () =>
+        updateFilters({ providers: filters.providers.filter((p) => p !== id) }),
     })),
     ...(filters.rating !== undefined
       ? [

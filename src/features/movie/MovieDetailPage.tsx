@@ -9,9 +9,7 @@ import { ProviderList } from './ProviderList';
 
 function MovieNotFound() {
   return (
-    <p className="py-16 text-center text-neutral-300">
-      We could not find that movie.
-    </p>
+    <p className="py-16 text-center text-neutral-300">We could not find that movie.</p>
   );
 }
 

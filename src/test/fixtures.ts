@@ -14,12 +14,26 @@ export const genresFixture: TmdbGenre[] = [
 
 export const regionsFixture: TmdbRegion[] = [
   { iso_3166_1: 'NL', english_name: 'Netherlands', native_name: 'Netherlands' },
-  { iso_3166_1: 'US', english_name: 'United States of America', native_name: 'United States' },
+  {
+    iso_3166_1: 'US',
+    english_name: 'United States of America',
+    native_name: 'United States',
+  },
 ];
 
 export const providersFixture: TmdbProvider[] = [
-  { provider_id: 8, provider_name: 'Netflix', logo_path: '/netflix.jpg', display_priority: 0 },
-  { provider_id: 337, provider_name: 'Disney Plus', logo_path: '/disney.jpg', display_priority: 1 },
+  {
+    provider_id: 8,
+    provider_name: 'Netflix',
+    logo_path: '/netflix.jpg',
+    display_priority: 0,
+  },
+  {
+    provider_id: 337,
+    provider_name: 'Disney Plus',
+    logo_path: '/disney.jpg',
+    display_priority: 1,
+  },
 ];
 
 export function movieSummaryFixture(

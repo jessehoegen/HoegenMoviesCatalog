@@ -5,14 +5,18 @@ import { ErrorState } from './ErrorState';
 
 describe('ErrorState', () => {
   it('gives a setup-specific message for 401', () => {
-    render(<ErrorState error={new TmdbError(401, 'Invalid API key.')} onRetry={vi.fn()} />);
+    render(
+      <ErrorState error={new TmdbError(401, 'Invalid API key.')} onRetry={vi.fn()} />,
+    );
 
     expect(screen.getByText(/VITE_TMDB_TOKEN/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /try again/i })).not.toBeInTheDocument();
   });
 
   it('offers retry for a server error', () => {
-    render(<ErrorState error={new TmdbError(503, 'Service unavailable.')} onRetry={vi.fn()} />);
+    render(
+      <ErrorState error={new TmdbError(503, 'Service unavailable.')} onRetry={vi.fn()} />,
+    );
 
     expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
   });

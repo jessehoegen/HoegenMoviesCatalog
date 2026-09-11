@@ -57,7 +57,10 @@ function extractRegionSubtag(language: string | undefined): string | undefined {
   }
 }
 
-export function defaultRegion(language: string | undefined, supported?: string[]): string {
+export function defaultRegion(
+  language: string | undefined,
+  supported?: string[],
+): string {
   const region = extractRegionSubtag(language)?.toUpperCase();
   if (!region) return FALLBACK_REGION;
   if (supported && !supported.includes(region)) return FALLBACK_REGION;
@@ -106,7 +109,8 @@ export function parseFilters(
   const requestedRegion = rawRegion ? rawRegion.toUpperCase() : undefined;
   const regionIsValid =
     requestedRegion !== undefined &&
-    (!vocabulary.supportedRegions || vocabulary.supportedRegions.includes(requestedRegion));
+    (!vocabulary.supportedRegions ||
+      vocabulary.supportedRegions.includes(requestedRegion));
 
   // Years must be whole numbers: they are spliced directly into an ISO date
   // string below, and a fractional year (e.g. 2010.5) would produce an

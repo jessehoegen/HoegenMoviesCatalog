@@ -4,7 +4,12 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { server } from '../../test/server';
-import { genresFixture, movieSummaryFixture, providersFixture, regionsFixture } from '../../test/fixtures';
+import {
+  genresFixture,
+  movieSummaryFixture,
+  providersFixture,
+  regionsFixture,
+} from '../../test/fixtures';
 import { renderWithProviders } from '../../test/utils';
 import { BrowsePage } from './BrowsePage';
 
@@ -105,9 +110,13 @@ describe('BrowsePage', () => {
 
     renderBrowse('/browse?region=NL&genres=28&rating=7');
 
-    expect(await screen.findByRole('button', { name: /remove action/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: /remove action/i }),
+    ).toBeInTheDocument();
 
-    await userEvent.click(await screen.findByRole('button', { name: /clear all filters/i }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: /clear all filters/i }),
+    );
 
     await waitFor(() => {
       const search = screen.getByTestId('location').textContent ?? '';

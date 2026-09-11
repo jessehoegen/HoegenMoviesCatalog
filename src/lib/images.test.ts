@@ -7,7 +7,9 @@ describe('image URL builders', () => {
   });
 
   it('builds a poster URL at an explicit size', () => {
-    expect(posterUrl('/abc123.jpg', 'w500')).toBe('https://image.tmdb.org/t/p/w500/abc123.jpg');
+    expect(posterUrl('/abc123.jpg', 'w500')).toBe(
+      'https://image.tmdb.org/t/p/w500/abc123.jpg',
+    );
   });
 
   it('builds backdrop and logo URLs', () => {

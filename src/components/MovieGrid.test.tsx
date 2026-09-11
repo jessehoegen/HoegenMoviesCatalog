@@ -53,9 +53,7 @@ describe('MovieGrid', () => {
   });
 
   it('renders movie cards linking to the detail route', () => {
-    renderWithProviders(
-      <MovieGrid {...baseProps} movies={[movieSummaryFixture()]} />,
-    );
+    renderWithProviders(<MovieGrid {...baseProps} movies={[movieSummaryFixture()]} />);
 
     const link = screen.getByRole('link', { name: /fight club/i });
     expect(link).toHaveAttribute('href', '/movie/550?region=NL');

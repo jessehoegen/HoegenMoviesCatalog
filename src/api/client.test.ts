@@ -29,7 +29,12 @@ describe('tmdbFetch', () => {
     server.use(
       http.get('https://api.themoviedb.org/3/discover/movie', ({ request }) => {
         seenParams = new URL(request.url).searchParams;
-        return HttpResponse.json({ page: 1, results: [], total_pages: 0, total_results: 0 });
+        return HttpResponse.json({
+          page: 1,
+          results: [],
+          total_pages: 0,
+          total_results: 0,
+        });
       }),
     );
 
@@ -68,7 +73,10 @@ describe('tmdbFetch', () => {
     server.use(
       http.get('https://api.themoviedb.org/3/movie/999999999', () =>
         HttpResponse.json(
-          { status_code: 34, status_message: 'The resource you requested could not be found.' },
+          {
+            status_code: 34,
+            status_message: 'The resource you requested could not be found.',
+          },
           { status: 404 },
         ),
       ),
@@ -79,8 +87,9 @@ describe('tmdbFetch', () => {
 
   it('falls back to the status text when the error body is not JSON', async () => {
     server.use(
-      http.get('https://api.themoviedb.org/3/movie/550', () =>
-        new HttpResponse('upstream exploded', { status: 500 }),
+      http.get(
+        'https://api.themoviedb.org/3/movie/550',
+        () => new HttpResponse('upstream exploded', { status: 500 }),
       ),
     );
 
