@@ -1,6 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { fetchGenres, fetchProviders, fetchRegions } from './movies';
-import type { TmdbGenre, TmdbProvider, TmdbRegion } from './types';
+import { fetchGenres, fetchMovie, fetchProviders, fetchRegions } from './movies';
+import type { TmdbGenre, TmdbMovieDetail, TmdbProvider, TmdbRegion } from './types';
 
 // Regions, providers, and genres change a few times a year. Fetch once per
 // session and never revalidate.
@@ -28,5 +28,16 @@ export function useProviders(region: string): UseQueryResult<TmdbProvider[]> {
     queryFn: () => fetchProviders(region),
     enabled: region !== '',
     ...REFERENCE_DATA,
+  });
+}
+
+const ONE_HOUR = 60 * 60 * 1000;
+
+export function useMovie(id: number): UseQueryResult<TmdbMovieDetail> {
+  return useQuery({
+    queryKey: ['movie', id],
+    queryFn: () => fetchMovie(id),
+    staleTime: ONE_HOUR,
+    enabled: Number.isInteger(id) && id > 0,
   });
 }

@@ -1,6 +1,7 @@
 import { tmdbFetch, type TmdbParams } from './client';
 import type {
   TmdbGenre,
+  TmdbMovieDetail,
   TmdbMovieSummary,
   TmdbPage,
   TmdbProvider,
@@ -33,4 +34,11 @@ export function fetchSearch(
   page: number,
 ): Promise<TmdbPage<TmdbMovieSummary>> {
   return tmdbFetch<TmdbPage<TmdbMovieSummary>>('/search/movie', { query, page });
+}
+
+export function fetchMovie(id: number): Promise<TmdbMovieDetail> {
+  // append_to_response folds the providers request into this one.
+  return tmdbFetch<TmdbMovieDetail>(`/movie/${id}`, {
+    append_to_response: 'watch/providers',
+  });
 }
