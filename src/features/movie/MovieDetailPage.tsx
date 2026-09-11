@@ -1,7 +1,7 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { TmdbError } from '../../api/client';
-import { useMovie } from '../../api/queries';
-import { useRegion } from '../../app/useRegion';
+import { useMovie, useRegions } from '../../api/queries';
+import { useRegion, withRegion } from '../../app/useRegion';
 import { ErrorState } from '../../components/ErrorState';
 import { Poster } from '../../components/Poster';
 import { backdropUrl } from '../../lib/images';
@@ -16,7 +16,7 @@ function MovieNotFound() {
 export function MovieDetailPage() {
   const { id } = useParams();
   const { region } = useRegion();
-  const navigate = useNavigate();
+  const { data: regions } = useRegions();
   const numericId = Number(id);
   const isValidId = Number.isInteger(numericId) && numericId > 0;
   // Hooks must run unconditionally; useMovie's own `enabled` guard keeps an
@@ -41,16 +41,24 @@ export function MovieDetailPage() {
   const movie = query.data;
   const backdrop = backdropUrl(movie.backdrop_path);
   const year = movie.release_date ? movie.release_date.slice(0, 4) : '—';
+  // 'Streaming in Netherlands' beats 'Streaming in NL'. The code stands in
+  // while the region list is still loading.
+  const regionName =
+    regions?.find((item) => item.iso_3166_1 === region)?.english_name ?? region;
 
   return (
     <article>
-      <button
-        type="button"
-        onClick={() => navigate(-1)}
-        className="mb-4 text-sm text-neutral-400 underline"
+      {/*
+        A link, not history.back(): this page is designed to be shared, and on
+        a deep link there is nothing to go back to. A link also middle-clicks,
+        hovers, and shows where it goes.
+      */}
+      <Link
+        to={withRegion('/browse', region)}
+        className="mb-4 inline-block text-sm text-neutral-400 underline"
       >
         Back to results
-      </button>
+      </Link>
 
       {backdrop && (
         <img
@@ -88,7 +96,7 @@ export function MovieDetailPage() {
           <p className="mt-4 max-w-prose text-neutral-300">{movie.overview}</p>
 
           <h2 className="mt-8 mb-3 text-sm uppercase tracking-wide text-neutral-500">
-            Streaming in {region}
+            Streaming in {regionName}
           </h2>
           <ProviderList movie={movie} region={region} />
         </div>

@@ -89,6 +89,38 @@ describe('MovieDetailPage', () => {
     ).toBeInTheDocument();
   });
 
+  it('offers a back link to browse rather than a history step', async () => {
+    server.use(
+      http.get('https://api.themoviedb.org/3/movie/550', () =>
+        HttpResponse.json(detailFixture()),
+      ),
+    );
+
+    // The page is designed to be shared: on a deep link there is no history
+    // entry to step back to, and navigate(-1) would leave the app or do
+    // nothing at all.
+    renderDetail('/movie/550?region=NL');
+
+    expect(await screen.findByRole('link', { name: /back to results/i })).toHaveAttribute(
+      'href',
+      '/browse?region=NL',
+    );
+  });
+
+  it('names the region rather than showing its code', async () => {
+    server.use(
+      http.get('https://api.themoviedb.org/3/movie/550', () =>
+        HttpResponse.json(detailFixture()),
+      ),
+    );
+
+    renderDetail('/movie/550?region=NL');
+
+    expect(
+      await screen.findByRole('heading', { name: /streaming in netherlands/i }),
+    ).toBeInTheDocument();
+  });
+
   it('renders a not-found view for a 404 rather than an error view', async () => {
     server.use(
       http.get('https://api.themoviedb.org/3/movie/999999', () =>

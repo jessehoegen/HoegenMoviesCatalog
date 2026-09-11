@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -101,6 +101,31 @@ describe('Layout', () => {
     await settleDebounce();
 
     expect(screen.getByTestId('location')).toHaveTextContent('/movie/550?region=NL');
+  });
+
+  it('keeps the header when the page below it crashes', () => {
+    // The boundary reports the crash; swallow the noise it makes doing so.
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockRegions();
+
+    function Boom(): never {
+      throw new Error('one malformed record');
+    }
+
+    renderWithProviders(
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/browse" element={<Boom />} />
+        </Route>
+      </Routes>,
+      { route: '/browse' },
+    );
+
+    expect(screen.getByRole('link', { name: /streaming catalog/i })).toBeInTheDocument();
+    expect(screen.getByRole('searchbox')).toBeInTheDocument();
+    expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
+
+    logged.mockRestore();
   });
 
   it('does not bounce forward to search again after going back', async () => {
