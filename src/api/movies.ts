@@ -1,5 +1,11 @@
-import { tmdbFetch } from './client';
-import type { TmdbGenre, TmdbProvider, TmdbRegion } from './types';
+import { tmdbFetch, type TmdbParams } from './client';
+import type {
+  TmdbGenre,
+  TmdbMovieSummary,
+  TmdbPage,
+  TmdbProvider,
+  TmdbRegion,
+} from './types';
 
 export async function fetchGenres(): Promise<TmdbGenre[]> {
   const data = await tmdbFetch<{ genres: TmdbGenre[] }>('/genre/movie/list');
@@ -16,4 +22,15 @@ export async function fetchProviders(region: string): Promise<TmdbProvider[]> {
     watch_region: region,
   });
   return [...data.results].sort((a, b) => a.display_priority - b.display_priority);
+}
+
+export function fetchDiscover(params: TmdbParams): Promise<TmdbPage<TmdbMovieSummary>> {
+  return tmdbFetch<TmdbPage<TmdbMovieSummary>>('/discover/movie', params);
+}
+
+export function fetchSearch(
+  query: string,
+  page: number,
+): Promise<TmdbPage<TmdbMovieSummary>> {
+  return tmdbFetch<TmdbPage<TmdbMovieSummary>>('/search/movie', { query, page });
 }
