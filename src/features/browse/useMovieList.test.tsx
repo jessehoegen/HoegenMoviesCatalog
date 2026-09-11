@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { server } from '../../test/server';
 import { movieSummaryFixture } from '../../test/fixtures';
 import { DEFAULT_SORT, type BrowseFilters } from './filters';
-import { flattenPages, useDiscoverMovies } from './useMovieList';
+import { flattenPages, useDiscoverMovies, useSearchMovies } from './useMovieList';
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -104,5 +104,50 @@ describe('useDiscoverMovies', () => {
 
   it('flattenPages returns an empty array when there is no data', () => {
     expect(flattenPages(undefined)).toEqual([]);
+  });
+});
+
+describe('useSearchMovies', () => {
+  it('sends the query and page', async () => {
+    let seen: URLSearchParams | undefined;
+
+    server.use(
+      http.get('https://api.themoviedb.org/3/search/movie', ({ request }) => {
+        seen = new URL(request.url).searchParams;
+        return HttpResponse.json({
+          page: 1,
+          results: [movieSummaryFixture()],
+          total_pages: 1,
+          total_results: 1,
+        });
+      }),
+    );
+
+    const { result } = renderHook(() => useSearchMovies('fight club'), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(seen?.get('query')).toBe('fight club');
+    expect(seen?.get('page')).toBe('1');
+  });
+
+  it('stays idle for an empty or whitespace-only query', () => {
+    let requestCount = 0;
+
+    server.use(
+      http.get('https://api.themoviedb.org/3/search/movie', () => {
+        requestCount++;
+        return HttpResponse.json({
+          page: 1,
+          results: [movieSummaryFixture()],
+          total_pages: 1,
+          total_results: 1,
+        });
+      }),
+    );
+
+    const { result } = renderHook(() => useSearchMovies('   '), { wrapper });
+
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(requestCount).toBe(0);
   });
 });
