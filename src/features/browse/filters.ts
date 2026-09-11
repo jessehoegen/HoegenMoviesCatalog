@@ -44,8 +44,21 @@ function maxYear(): number {
   return new Date().getFullYear() + 5;
 }
 
+function extractRegionSubtag(language: string | undefined): string | undefined {
+  if (!language) return undefined;
+  try {
+    // Intl.Locale correctly separates the region subtag from a script subtag
+    // (e.g. 'CN' from 'zh-Hans-CN'), unlike a naive split on '-'. Malformed
+    // input throws, and this parses an untrusted URL-derived value, so any
+    // throw is treated the same as "no region present".
+    return new Intl.Locale(language).region;
+  } catch {
+    return undefined;
+  }
+}
+
 export function defaultRegion(language: string | undefined, supported?: string[]): string {
-  const region = language?.split('-')[1]?.toUpperCase();
+  const region = extractRegionSubtag(language)?.toUpperCase();
   if (!region) return FALLBACK_REGION;
   if (supported && !supported.includes(region)) return FALLBACK_REGION;
   return region;
@@ -63,10 +76,16 @@ function parseIdList(raw: string | null, validIds?: number[]): number[] {
   return validIds ? unique.filter((id) => validIds.includes(id)) : unique;
 }
 
-function parseNumberInRange(raw: string | null, min: number, max: number): number | undefined {
+function parseNumberInRange(
+  raw: string | null,
+  min: number,
+  max: number,
+  integer = false,
+): number | undefined {
   if (raw === null || raw.trim() === '') return undefined;
   const value = Number(raw);
   if (!Number.isFinite(value) || value < min || value > max) return undefined;
+  if (integer && !Number.isInteger(value)) return undefined;
   return value;
 }
 
@@ -79,13 +98,21 @@ export function parseFilters(
   vocabulary: FilterVocabulary = {},
   language: string | undefined = navigator.language,
 ): BrowseFilters {
-  const requestedRegion = params.get('region')?.toUpperCase();
+  const rawRegion = params.get('region');
+  // An empty '?region=' must be treated as absent, the same way parseIdList
+  // treats an empty id list as absent — otherwise it bypasses default
+  // substitution and region ends up '', violating the "region is never
+  // empty" guarantee.
+  const requestedRegion = rawRegion ? rawRegion.toUpperCase() : undefined;
   const regionIsValid =
     requestedRegion !== undefined &&
     (!vocabulary.supportedRegions || vocabulary.supportedRegions.includes(requestedRegion));
 
-  const from = parseNumberInRange(params.get('from'), MIN_YEAR, maxYear());
-  const to = parseNumberInRange(params.get('to'), MIN_YEAR, maxYear());
+  // Years must be whole numbers: they are spliced directly into an ISO date
+  // string below, and a fractional year (e.g. 2010.5) would produce an
+  // invalid date like '2010.5-01-01'.
+  const from = parseNumberInRange(params.get('from'), MIN_YEAR, maxYear(), true);
+  const to = parseNumberInRange(params.get('to'), MIN_YEAR, maxYear(), true);
 
   return {
     region: regionIsValid

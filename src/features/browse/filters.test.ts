@@ -37,6 +37,18 @@ describe('defaultRegion', () => {
   it('trusts the locale when the supported list is not yet loaded', () => {
     expect(defaultRegion('nl-NL', undefined)).toBe('NL');
   });
+
+  it('reads the region subtag, not the script subtag, from a locale with a script tag', () => {
+    expect(defaultRegion('zh-Hans-CN', undefined)).toBe('CN');
+  });
+
+  it('reads the region subtag from another script-tagged locale', () => {
+    expect(defaultRegion('sr-Latn-RS', ['RS', 'US'])).toBe('RS');
+  });
+
+  it('falls back to US instead of throwing on a malformed locale', () => {
+    expect(defaultRegion('not a locale', undefined)).toBe('US');
+  });
 });
 
 describe('parseFilters', () => {
@@ -116,6 +128,30 @@ describe('parseFilters', () => {
 
     expect(filters.from).toBe(2019);
     expect(filters.to).toBeUndefined();
+  });
+
+  it('treats an empty region param as absent while the vocabulary is still loading', () => {
+    const filters = parseFilters(params('region='), {}, 'nl-NL');
+
+    expect(filters.region).toBe('NL');
+  });
+
+  it('uppercases a lowercase region param', () => {
+    const filters = parseFilters(params('region=us'), vocabulary, 'nl-NL');
+
+    expect(filters.region).toBe('US');
+  });
+
+  it('discards a fractional year', () => {
+    const filters = parseFilters(params('from=2010.5'), vocabulary, 'nl-NL');
+
+    expect(filters.from).toBeUndefined();
+  });
+
+  it('keeps a fractional rating', () => {
+    const filters = parseFilters(params('rating=7.5'), vocabulary, 'nl-NL');
+
+    expect(filters.rating).toBe(7.5);
   });
 });
 
