@@ -6,7 +6,7 @@ import {
   serialiseFilters,
   type BrowseFilters,
   DEFAULT_SORT,
-} from './filters';
+} from '../../lib/filters';
 
 export function useBrowseFilters(): {
   filters: BrowseFilters;

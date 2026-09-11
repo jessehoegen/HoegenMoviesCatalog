@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useGenres, useProviders } from '../../api/queries';
 import { logoUrl } from '../../lib/images';
-import { SORT_OPTIONS, type BrowseFilters, type SortOption } from './filters';
+import { SORT_OPTIONS, type BrowseFilters, type SortOption } from '../../lib/filters';
 
 interface FilterBarProps {
   filters: BrowseFilters;

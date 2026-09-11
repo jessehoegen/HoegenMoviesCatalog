@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useRegions } from '../api/queries';
-import { defaultRegion } from '../features/browse/filters';
+import { defaultRegion } from '../lib/filters';
 
 export function withRegion(
   path: string,

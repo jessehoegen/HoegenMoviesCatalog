@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { server } from '../../test/server';
-import { movieSummaryFixture } from '../../test/fixtures';
-import { DEFAULT_SORT, type BrowseFilters } from './filters';
+import { server } from '../test/server';
+import { movieSummaryFixture } from '../test/fixtures';
+import { DEFAULT_SORT, type BrowseFilters } from '../lib/filters';
 import { flattenPages, useDiscoverMovies, useSearchMovies } from './useMovieList';
 
 function wrapper({ children }: { children: ReactNode }) {

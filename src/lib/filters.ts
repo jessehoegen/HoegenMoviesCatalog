@@ -1,4 +1,4 @@
-import type { TmdbParams } from '../../api/client';
+import type { TmdbParams } from '../api/client';
 
 export const SORT_OPTIONS = [
   'popularity.desc',

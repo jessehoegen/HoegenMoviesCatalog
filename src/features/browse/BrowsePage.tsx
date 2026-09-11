@@ -3,7 +3,7 @@ import { withRegion } from '../../app/useRegion';
 import { MovieGrid } from '../../components/MovieGrid';
 import { FilterBar } from './FilterBar';
 import { useBrowseFilters } from './useBrowseFilters';
-import { flattenPages, useDiscoverMovies } from './useMovieList';
+import { flattenPages, useDiscoverMovies } from '../../api/useMovieList';
 
 export function BrowsePage() {
   const { filters, updateFilters, clearFilters } = useBrowseFilters();

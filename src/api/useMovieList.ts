@@ -3,9 +3,9 @@ import {
   type InfiniteData,
   type UseInfiniteQueryResult,
 } from '@tanstack/react-query';
-import { fetchDiscover, fetchSearch } from '../../api/movies';
-import type { TmdbMovieSummary, TmdbPage } from '../../api/types';
-import { toDiscoverParams, type BrowseFilters } from './filters';
+import { fetchDiscover, fetchSearch } from './movies';
+import type { TmdbMovieSummary, TmdbPage } from './types';
+import { toDiscoverParams, type BrowseFilters } from '../lib/filters';
 import { getNextPageParam } from './pagination';
 
 type MoviePage = TmdbPage<TmdbMovieSummary>;

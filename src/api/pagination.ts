@@ -1,4 +1,4 @@
-import type { TmdbPage } from '../../api/types';
+import type { TmdbPage } from './types';
 
 /**
  * TMDB enforces this ceiling on /discover/movie and /search/movie even though
