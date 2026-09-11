@@ -1,18 +1,23 @@
+import type { ReactNode } from 'react';
 import type { TmdbMovieSummary } from '../api/types';
 import { EmptyState } from './EmptyState';
 import { ErrorState } from './ErrorState';
 import { LoadMoreButton } from './LoadMoreButton';
 import { MovieCard } from './MovieCard';
 
-export interface MovieGridProps {
+interface MovieGridProps {
   movies: TmdbMovieSummary[];
   status: 'pending' | 'error' | 'success';
   error: unknown;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
+  /** True when a page *after* the first failed; `status` stays 'success'. */
+  isFetchNextPageError?: boolean;
   onLoadMore: () => void;
   onRetry: () => void;
   onClearFilters?: () => void;
+  /** Replaces the browse empty state, which talks about filters. */
+  emptyState?: ReactNode;
   linkFor: (movie: TmdbMovieSummary) => string;
 }
 
@@ -44,20 +49,43 @@ function GridSkeleton() {
   );
 }
 
+function NextPageError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div role="alert" className="flex flex-col items-center gap-3 py-8 text-center">
+      <p className="text-sm text-neutral-300">
+        Could not load more results. The rest of the list is still here.
+      </p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="rounded-md border border-neutral-700 px-6 py-2 text-sm text-neutral-200 hover:bg-neutral-800"
+      >
+        Retry
+      </button>
+    </div>
+  );
+}
+
 export function MovieGrid({
   movies,
   status,
   error,
   hasNextPage,
   isFetchingNextPage,
+  isFetchNextPageError = false,
   onLoadMore,
   onRetry,
   onClearFilters,
+  emptyState,
   linkFor,
 }: MovieGridProps) {
+  // `status` describes the first page only: a later page failing leaves it
+  // 'success', which is why the next-page error is reported separately.
   if (status === 'pending') return <GridSkeleton />;
   if (status === 'error') return <ErrorState error={error} onRetry={onRetry} />;
-  if (movies.length === 0) return <EmptyState onClearFilters={onClearFilters} />;
+  if (movies.length === 0) {
+    return <>{emptyState ?? <EmptyState onClearFilters={onClearFilters} />}</>;
+  }
 
   return (
     <>
@@ -67,10 +95,17 @@ export function MovieGrid({
         ))}
       </ul>
 
-      {hasNextPage ? (
-        <LoadMoreButton onLoadMore={onLoadMore} isFetching={isFetchingNextPage} />
-      ) : (
+      {!hasNextPage ? (
         <p className="py-8 text-center text-sm text-neutral-500">End of results.</p>
+      ) : isFetchNextPageError ? (
+        // LoadMoreButton is unmounted rather than disabled: its
+        // IntersectionObserver would otherwise re-observe a sentinel that is
+        // still on screen and fire the same failing request again, and again,
+        // for as long as the user sat at the bottom of the grid. Recovery
+        // takes an explicit click.
+        <NextPageError onRetry={onLoadMore} />
+      ) : (
+        <LoadMoreButton onLoadMore={onLoadMore} isFetching={isFetchingNextPage} />
       )}
     </>
   );

@@ -69,6 +69,7 @@ export function BrowsePage() {
         error={query.error}
         hasNextPage={query.hasNextPage}
         isFetchingNextPage={query.isFetchingNextPage}
+        isFetchNextPageError={query.isFetchNextPageError}
         onLoadMore={() => void query.fetchNextPage()}
         onRetry={() => void query.refetch()}
         onClearFilters={clearFilters}

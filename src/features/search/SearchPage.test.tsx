@@ -64,6 +64,21 @@ describe('SearchPage', () => {
     );
   });
 
+  it('names the query in its empty state instead of talking about filters', async () => {
+    server.use(
+      http.get('https://api.themoviedb.org/3/search/movie', () =>
+        HttpResponse.json({ page: 1, results: [], total_pages: 0, total_results: 0 }),
+      ),
+    );
+
+    renderSearch('/search?q=zzzzq&region=NL');
+
+    // Search has no year range and no providers, so the browse empty state's
+    // advice is nonsense here.
+    expect(await screen.findByText(/no movies match “zzzzq”/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no movies match these filters/i)).not.toBeInTheDocument();
+  });
+
   it('prompts for a query when none is present', () => {
     renderSearch('/search?region=NL');
 

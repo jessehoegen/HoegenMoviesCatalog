@@ -31,8 +31,19 @@ export function SearchPage() {
         error={results.error}
         hasNextPage={results.hasNextPage}
         isFetchingNextPage={results.isFetchingNextPage}
+        isFetchNextPageError={results.isFetchNextPageError}
         onLoadMore={() => void results.fetchNextPage()}
         onRetry={() => void results.refetch()}
+        // The browse empty state talks about widening the year range and
+        // selecting more providers; search has neither.
+        emptyState={
+          <div className="py-16 text-center">
+            <p className="text-neutral-300">No movies match “{query}”.</p>
+            <p className="mt-1 text-sm text-neutral-500">
+              Check the spelling, or try a shorter part of the title.
+            </p>
+          </div>
+        }
         linkFor={(movie) => withRegion(`/movie/${movie.id}`, region)}
       />
     </>
