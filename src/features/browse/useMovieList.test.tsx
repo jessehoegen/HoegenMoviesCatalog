@@ -65,6 +65,12 @@ describe('useDiscoverMovies', () => {
     const { result } = renderHook(() => useDiscoverMovies(baseFilters), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    // Reading `data` here registers it as a tracked property on the query
+    // observer. Without this read, TanStack Query v5's selective notification
+    // (tracked queries) only re-renders for properties already read at least
+    // once, so the page-2 update below would be silently skipped and
+    // result.current would never advance — do not delete this as "redundant".
+    expect(flattenPages(result.current.data)).toHaveLength(1);
     expect(result.current.hasNextPage).toBe(true);
 
     await act(async () => {
