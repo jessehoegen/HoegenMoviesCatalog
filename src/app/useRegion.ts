@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useRegions } from '../api/queries';
-import { defaultRegion } from '../lib/filters';
+import { resolveRegion } from '../lib/filters';
 
 export function withRegion(
   path: string,
@@ -20,11 +20,12 @@ export function useRegion(): { region: string; setRegion: (next: string) => void
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: regions } = useRegions();
 
-  const supported = regions?.map((r) => r.iso_3166_1);
-  const fromUrl = searchParams.get('region')?.toUpperCase();
-  const isValid = fromUrl !== undefined && (!supported || supported.includes(fromUrl));
-
-  const region = isValid ? fromUrl : defaultRegion(navigator.language, supported);
+  // Same resolution rule as the URL parser, from the same helper, so the
+  // header and the browse filters can never disagree about the region.
+  const region = resolveRegion(
+    searchParams.get('region'),
+    regions?.map((r) => r.iso_3166_1),
+  );
 
   const setRegion = useCallback(
     (next: string) => {

@@ -99,6 +99,54 @@ describe('BrowsePage', () => {
     await waitFor(() => expect(requestedGenres).toContain('28'));
   });
 
+  it('writes the resolved region into a URL that arrived without one', async () => {
+    mockReferenceData();
+    let seenRegion: string | null = null;
+
+    server.use(
+      http.get('https://api.themoviedb.org/3/discover/movie', ({ request }) => {
+        seenRegion = new URL(request.url).searchParams.get('watch_region');
+        return HttpResponse.json({
+          page: 1,
+          results: [movieSummaryFixture()],
+          total_pages: 1,
+          total_results: 1,
+        });
+      }),
+    );
+
+    // The landing redirect sends the user to /browse with no query string at
+    // all. Left alone, the address bar describes a different catalog from the
+    // one on screen, and sharing that link hands the recipient another one.
+    renderBrowse('/browse');
+
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent('region=US'),
+    );
+    expect(seenRegion).toBe('US');
+  });
+
+  it('replaces an unsupported region in the URL with the one actually used', async () => {
+    mockReferenceData();
+
+    server.use(
+      http.get('https://api.themoviedb.org/3/discover/movie', () =>
+        HttpResponse.json({
+          page: 1,
+          results: [movieSummaryFixture()],
+          total_pages: 1,
+          total_results: 1,
+        }),
+      ),
+    );
+
+    renderBrowse('/browse?region=ZZ');
+
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent('region=US'),
+    );
+  });
+
   it('keeps a year typed one character at a time and puts it in the URL', async () => {
     mockReferenceData();
 

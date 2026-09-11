@@ -72,6 +72,28 @@ export function defaultRegion(
   return region;
 }
 
+/**
+ * Resolves a region the way every screen must: uppercase it, keep it only if
+ * TMDB supports it, otherwise fall back to the locale default. The single
+ * authority — the header, the filter hook, and the URL parser all call this,
+ * so they cannot drift apart.
+ *
+ * An empty `?region=` counts as absent, the same way an empty id list does;
+ * without that, region ends up '' and violates the "region is never empty"
+ * guarantee that `with_watch_providers` depends on.
+ */
+export function resolveRegion(
+  raw: string | null | undefined,
+  supported?: string[],
+  language: string | undefined = navigator.language,
+): string {
+  const requested = raw ? raw.toUpperCase() : undefined;
+  const isSupported =
+    requested !== undefined && (!supported || supported.includes(requested));
+
+  return isSupported ? requested : defaultRegion(language, supported);
+}
+
 function parseIdList(raw: string | null, validIds?: number[]): number[] {
   if (!raw) return [];
 
@@ -106,17 +128,6 @@ export function parseFilters(
   vocabulary: FilterVocabulary = {},
   language: string | undefined = navigator.language,
 ): BrowseFilters {
-  const rawRegion = params.get('region');
-  // An empty '?region=' must be treated as absent, the same way parseIdList
-  // treats an empty id list as absent — otherwise it bypasses default
-  // substitution and region ends up '', violating the "region is never
-  // empty" guarantee.
-  const requestedRegion = rawRegion ? rawRegion.toUpperCase() : undefined;
-  const regionIsValid =
-    requestedRegion !== undefined &&
-    (!vocabulary.supportedRegions ||
-      vocabulary.supportedRegions.includes(requestedRegion));
-
   // Years must be whole numbers: they are spliced directly into an ISO date
   // string below, and a fractional year (e.g. 2010.5) would produce an
   // invalid date like '2010.5-01-01'.
@@ -124,9 +135,7 @@ export function parseFilters(
   const to = parseNumberInRange(params.get('to'), MIN_YEAR, maxYear(), true);
 
   return {
-    region: regionIsValid
-      ? requestedRegion
-      : defaultRegion(language, vocabulary.supportedRegions),
+    region: resolveRegion(params.get('region'), vocabulary.supportedRegions, language),
     providers: parseIdList(params.get('providers'), vocabulary.validProviderIds),
     genres: parseIdList(params.get('genres'), vocabulary.validGenreIds),
     from,
