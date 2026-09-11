@@ -99,4 +99,13 @@ describe('MovieDetailPage', () => {
 
     expect(await screen.findByText(/we could not find that movie/i)).toBeInTheDocument();
   });
+
+  it('renders a not-found view for a non-numeric id rather than an endless skeleton', async () => {
+    // No movie endpoint handler is registered: if the invalid-id guard ever
+    // regresses and a request fires, onUnhandledRequest: 'error' fails this
+    // test loudly instead of letting it hang or pass by accident.
+    renderDetail('/movie/abc?region=NL');
+
+    expect(await screen.findByText(/we could not find that movie/i)).toBeInTheDocument();
+  });
 });

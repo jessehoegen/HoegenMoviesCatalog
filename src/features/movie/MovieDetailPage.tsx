@@ -7,11 +7,27 @@ import { Poster } from '../../components/Poster';
 import { backdropUrl } from '../../lib/images';
 import { ProviderList } from './ProviderList';
 
+function MovieNotFound() {
+  return (
+    <p className="py-16 text-center text-neutral-300">
+      We could not find that movie.
+    </p>
+  );
+}
+
 export function MovieDetailPage() {
   const { id } = useParams();
   const { region } = useRegion();
   const navigate = useNavigate();
-  const query = useMovie(Number(id));
+  const numericId = Number(id);
+  const isValidId = Number.isInteger(numericId) && numericId > 0;
+  // Hooks must run unconditionally; useMovie's own `enabled` guard keeps an
+  // invalid id from firing a request. The early return below happens after.
+  const query = useMovie(numericId);
+
+  if (!isValidId) {
+    return <MovieNotFound />;
+  }
 
   if (query.isPending) {
     return <div className="h-96 animate-pulse rounded-lg bg-neutral-900" />;
@@ -19,11 +35,7 @@ export function MovieDetailPage() {
 
   if (query.isError) {
     if (query.error instanceof TmdbError && query.error.status === 404) {
-      return (
-        <p className="py-16 text-center text-neutral-300">
-          We could not find that movie.
-        </p>
-      );
+      return <MovieNotFound />;
     }
     return <ErrorState error={query.error} onRetry={() => void query.refetch()} />;
   }
