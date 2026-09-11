@@ -1,10 +1,4 @@
-import type {
-  TmdbGenre,
-  TmdbMovieSummary,
-  TmdbPage,
-  TmdbProvider,
-  TmdbRegion,
-} from '../api/types';
+import type { TmdbGenre, TmdbMovieSummary, TmdbProvider, TmdbRegion } from '../api/types';
 
 export const genresFixture: TmdbGenre[] = [
   { id: 28, name: 'Action' },
@@ -47,20 +41,6 @@ export function movieSummaryFixture(
     release_date: '1999-10-15',
     vote_average: 8.4,
     vote_count: 27000,
-    ...overrides,
-  };
-}
-
-// `total_pages`/`total_results` don't automatically track an overridden `results`
-// array — if your test cares about pagination boundaries, override the counts too.
-export function moviePageFixture(
-  overrides: Partial<TmdbPage<TmdbMovieSummary>> = {},
-): TmdbPage<TmdbMovieSummary> {
-  return {
-    page: 1,
-    results: [movieSummaryFixture()],
-    total_pages: 1,
-    total_results: 1,
     ...overrides,
   };
 }

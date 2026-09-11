@@ -40,8 +40,8 @@ suite runs with no API token, no network access, and no rate limits.
 
 - The TMDB token is compiled into the client bundle and is publicly visible. Use
   a read-only token you are willing to rotate. `src/api/client.ts` is the only
-  module that knows about TMDB, so moving to a server-side proxy is a contained
-  change.
+  module that knows the API base URL and the auth header, so moving to a
+  server-side proxy is a contained change.
 - TMDB caps `/discover/movie` at page 500 regardless of the `total_pages` it
   reports, so the catalog is not exhaustively enumerable by paging. Filters are
   how you reach specific titles.

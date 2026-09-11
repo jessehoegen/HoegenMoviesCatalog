@@ -89,13 +89,20 @@ describe('tmdbFetch', () => {
     server.use(
       http.get(
         'https://api.themoviedb.org/3/movie/550',
-        () => new HttpResponse('upstream exploded', { status: 500 }),
+        () =>
+          new HttpResponse('upstream exploded', {
+            status: 500,
+            statusText: 'Internal Server Error',
+          }),
       ),
     );
 
     await expect(tmdbFetch('/movie/550')).rejects.toMatchObject({
       status: 500,
       statusCode: undefined,
+      // The point of the fallback: without asserting the message, deleting it
+      // would leave this test passing on an error that says nothing.
+      message: 'Internal Server Error',
     });
   });
 });

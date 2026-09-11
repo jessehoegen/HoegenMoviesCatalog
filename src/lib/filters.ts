@@ -14,9 +14,9 @@ export const SORT_OPTIONS = [
 export type SortOption = (typeof SORT_OPTIONS)[number];
 
 export const DEFAULT_SORT: SortOption = 'popularity.desc';
-export const FALLBACK_REGION = 'US';
+const FALLBACK_REGION = 'US';
 export const MIN_YEAR = 1874;
-export const VOTE_COUNT_FLOOR = 100;
+const VOTE_COUNT_FLOOR = 100;
 
 export interface BrowseFilters {
   region: string;
