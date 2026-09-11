@@ -1,11 +1,127 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useGenres, useProviders } from '../../api/queries';
 import { logoUrl } from '../../lib/images';
-import { SORT_OPTIONS, type BrowseFilters, type SortOption } from '../../lib/filters';
+import {
+  MIN_YEAR,
+  SORT_OPTIONS,
+  maxYear,
+  type BrowseFilters,
+  type SortOption,
+} from '../../lib/filters';
 
 interface FilterBarProps {
   filters: BrowseFilters;
   updateFilters: (patch: Partial<BrowseFilters>) => void;
+}
+
+const COMMIT_DEBOUNCE_MS = 500;
+
+const RATING_MIN = 0;
+const RATING_MAX = 10;
+
+interface NumberFieldProps {
+  label: string;
+  value: number | undefined;
+  min: number;
+  max: number;
+  step?: number;
+  integer?: boolean;
+  onCommit: (next: number | undefined) => void;
+}
+
+function toText(value: number | undefined): string {
+  return value === undefined ? '' : String(value);
+}
+
+/**
+ * A numeric filter input whose raw text lives in local state and reaches the
+ * URL only on blur, on Enter, or after a pause.
+ *
+ * Writing every keystroke straight to the URL erases partial input: typing
+ * '2010' passes through 2, 20 and 201, each of which the filter parser rejects
+ * as out of range, so the value read back is `undefined` and React restores the
+ * controlled input to empty after every single key. Only values the parser will
+ * actually keep are committed, so the URL never carries a nonsense `?from=0`.
+ */
+function NumberField({
+  label,
+  value,
+  min,
+  max,
+  step,
+  integer = false,
+  onCommit,
+}: NumberFieldProps) {
+  const [text, setText] = useState(() => toText(value));
+  const [applied, setApplied] = useState(value);
+
+  // The applied filter is the authority. When it changes underneath the field
+  // — "Clear all filters", a chip removed, a shared link — the text resets to
+  // it. While the user is typing the filter does not change, so this never
+  // eats a keystroke. Adjusting state during render is React's own
+  // recommendation for resetting local state from a prop, and avoids the extra
+  // paint an effect would cost.
+  if (value !== applied) {
+    setApplied(value);
+    setText(toText(value));
+  }
+
+  const parse = useCallback(
+    (raw: string): { valid: boolean; value?: number } => {
+      if (raw.trim() === '') return { valid: true, value: undefined };
+      const parsed = Number(raw);
+      if (!Number.isFinite(parsed)) return { valid: false };
+      if (parsed < min || parsed > max) return { valid: false };
+      if (integer && !Number.isInteger(parsed)) return { valid: false };
+      return { valid: true, value: parsed };
+    },
+    [min, max, integer],
+  );
+
+  // A pause commits too, so the spinner arrows work without the user having to
+  // blur the field. The cleanup cancels the pending commit whenever the text
+  // changes again or the filter changes underneath it, so nothing half-typed
+  // and nothing already withdrawn ever reaches the URL.
+  useEffect(() => {
+    if (text === toText(value)) return;
+
+    const timer = setTimeout(() => {
+      const parsed = parse(text);
+      if (parsed.valid && parsed.value !== value) onCommit(parsed.value);
+    }, COMMIT_DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
+  }, [text, value, parse, onCommit]);
+
+  function commitOrRevert() {
+    const parsed = parse(text);
+    // Input the parser would throw away is discarded rather than written to
+    // the URL, so the field never shows a filter that is not actually applied.
+    if (!parsed.valid) {
+      setText(toText(value));
+      return;
+    }
+    if (parsed.value !== value) onCommit(parsed.value);
+  }
+
+  return (
+    <label className="text-sm text-neutral-400">
+      <span className="mb-1 block">{label}</span>
+      <input
+        type="number"
+        value={text}
+        min={min}
+        max={max}
+        step={step}
+        onChange={(event) => setText(event.target.value)}
+        onBlur={commitOrRevert}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') commitOrRevert();
+        }}
+        className="w-24 rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-neutral-100"
+      />
+    </label>
+  );
 }
 
 const SORT_LABELS: Record<SortOption, string> = {
@@ -27,6 +143,22 @@ export function FilterBar({ filters, updateFilters }: FilterBarProps) {
   const { data: genres } = useGenres();
   const { data: providers } = useProviders(filters.region);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Stable identities: each one is a dependency of a NumberField's debounce,
+  // and a fresh callback on every render would restart the timer instead of
+  // letting it fire.
+  const commitFrom = useCallback(
+    (from: number | undefined) => updateFilters({ from }),
+    [updateFilters],
+  );
+  const commitTo = useCallback(
+    (to: number | undefined) => updateFilters({ to }),
+    [updateFilters],
+  );
+  const commitRating = useCallback(
+    (rating: number | undefined) => updateFilters({ rating }),
+    [updateFilters],
+  );
 
   return (
     <section className="mb-6">
@@ -101,54 +233,32 @@ export function FilterBar({ filters, updateFilters }: FilterBarProps) {
         </fieldset>
 
         <div className="flex flex-wrap items-end gap-4">
-          <label className="text-sm text-neutral-400">
-            <span className="mb-1 block">From year</span>
-            <input
-              type="number"
-              value={filters.from ?? ''}
-              min={1874}
-              onChange={(event) =>
-                updateFilters({
-                  from:
-                    event.target.value === '' ? undefined : Number(event.target.value),
-                })
-              }
-              className="w-24 rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-neutral-100"
-            />
-          </label>
+          <NumberField
+            label="From year"
+            value={filters.from}
+            min={MIN_YEAR}
+            max={maxYear()}
+            integer
+            onCommit={commitFrom}
+          />
 
-          <label className="text-sm text-neutral-400">
-            <span className="mb-1 block">To year</span>
-            <input
-              type="number"
-              value={filters.to ?? ''}
-              min={1874}
-              onChange={(event) =>
-                updateFilters({
-                  to: event.target.value === '' ? undefined : Number(event.target.value),
-                })
-              }
-              className="w-24 rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-neutral-100"
-            />
-          </label>
+          <NumberField
+            label="To year"
+            value={filters.to}
+            min={MIN_YEAR}
+            max={maxYear()}
+            integer
+            onCommit={commitTo}
+          />
 
-          <label className="text-sm text-neutral-400">
-            <span className="mb-1 block">Min rating</span>
-            <input
-              type="number"
-              value={filters.rating ?? ''}
-              min={0}
-              max={10}
-              step={0.5}
-              onChange={(event) =>
-                updateFilters({
-                  rating:
-                    event.target.value === '' ? undefined : Number(event.target.value),
-                })
-              }
-              className="w-24 rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-neutral-100"
-            />
-          </label>
+          <NumberField
+            label="Min rating"
+            value={filters.rating}
+            min={RATING_MIN}
+            max={RATING_MAX}
+            step={0.5}
+            onCommit={commitRating}
+          />
 
           <label className="text-sm text-neutral-400">
             <span className="mb-1 block">Sort by</span>

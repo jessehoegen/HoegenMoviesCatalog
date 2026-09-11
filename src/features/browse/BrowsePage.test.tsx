@@ -99,6 +99,66 @@ describe('BrowsePage', () => {
     await waitFor(() => expect(requestedGenres).toContain('28'));
   });
 
+  it('keeps a year typed one character at a time and puts it in the URL', async () => {
+    mockReferenceData();
+
+    server.use(
+      http.get('https://api.themoviedb.org/3/discover/movie', () =>
+        HttpResponse.json({
+          page: 1,
+          results: [movieSummaryFixture()],
+          total_pages: 1,
+          total_results: 1,
+        }),
+      ),
+    );
+
+    renderBrowse('/browse?region=NL');
+    await screen.findByText('Fight Club');
+
+    const field = screen.getByLabelText(/from year/i);
+    // 2, 20 and 201 are all below the minimum year: a field that wrote every
+    // keystroke to the URL read each of them back as undefined and erased
+    // itself, so the year filter could not be typed at all.
+    await userEvent.type(field, '2010');
+
+    expect(field).toHaveValue(2010);
+    await waitFor(
+      () => expect(screen.getByTestId('location')).toHaveTextContent('from=2010'),
+      { timeout: 3000 },
+    );
+  });
+
+  it('empties the year field when all filters are cleared', async () => {
+    mockReferenceData();
+
+    server.use(
+      http.get('https://api.themoviedb.org/3/discover/movie', () =>
+        HttpResponse.json({
+          page: 1,
+          results: [movieSummaryFixture()],
+          total_pages: 1,
+          total_results: 1,
+        }),
+      ),
+    );
+
+    renderBrowse('/browse?region=NL&rating=7');
+    await screen.findByText('Fight Club');
+
+    await userEvent.type(screen.getByLabelText(/from year/i), '2010');
+    await waitFor(
+      () => expect(screen.getByTestId('location')).toHaveTextContent('from=2010'),
+      { timeout: 3000 },
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /clear all filters/i }));
+
+    await waitFor(() => expect(screen.getByLabelText(/from year/i)).toHaveValue(null));
+    expect(screen.getByLabelText(/min rating/i)).toHaveValue(null);
+    expect(screen.getByTestId('location')).not.toHaveTextContent('from=');
+  });
+
   it('shows active filters as chips and clears them', async () => {
     mockReferenceData();
 

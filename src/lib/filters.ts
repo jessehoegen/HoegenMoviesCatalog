@@ -40,7 +40,12 @@ export interface FilterVocabulary {
   validProviderIds?: number[];
 }
 
-function maxYear(): number {
+/**
+ * The upper bound for a release year. Exported so the filter inputs can accept
+ * exactly the values the parser will keep, rather than keeping their own copy
+ * of the range.
+ */
+export function maxYear(): number {
   return new Date().getFullYear() + 5;
 }
 
