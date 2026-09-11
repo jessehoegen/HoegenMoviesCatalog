@@ -37,6 +37,8 @@ export function movieSummaryFixture(
   };
 }
 
+// `total_pages`/`total_results` don't automatically track an overridden `results`
+// array — if your test cares about pagination boundaries, override the counts too.
 export function moviePageFixture(
   overrides: Partial<TmdbPage<TmdbMovieSummary>> = {},
 ): TmdbPage<TmdbMovieSummary> {

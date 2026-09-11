@@ -29,7 +29,7 @@ describe('reference data queries', () => {
   it('unwraps the regions list and sorts it by English name', async () => {
     server.use(
       http.get('https://api.themoviedb.org/3/watch/providers/regions', () =>
-        HttpResponse.json({ results: regionsFixture }),
+        HttpResponse.json({ results: [regionsFixture[1], regionsFixture[0]] }),
       ),
     );
 
