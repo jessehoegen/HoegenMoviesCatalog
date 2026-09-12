@@ -4,6 +4,16 @@
 **Status:** Approved design, ready for implementation planning
 **Supersedes:** the "Accepted risks" section of `2026-09-10-movie-catalog-design.md` regarding the publicly-readable API token
 
+> **Amendment (2026-09-12, during implementation planning).** Vercel does not
+> support catch-all function filenames (`[...path].ts`) outside Next.js, so the
+> proxy cannot live at `api/tmdb/[...path].ts` as described below. It is instead
+> a single function at `api/tmdb.ts`, reached through a `vercel.json` rewrite of
+> `/api/tmdb/:path*` to `/api/tmdb?tmdb_path=:path*`, with its logic in
+> `server/tmdbProxy.ts` so the tests can sit outside `api/`, where every file
+> becomes a public endpoint. Browser-facing URLs, the allowlist, the origin
+> check, and every other decision below are unchanged. Details are in
+> `docs/superpowers/plans/2026-09-12-deployment-and-tmdb-proxy.md`.
+
 ## Purpose
 
 Deploy the movie catalog to a public URL, and move the TMDB API token out of
