@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../test/server';
-import { authUrl, sessionResponse } from '../../test/supabase';
-import { exchangeCode, sendMagicLink } from './authApi';
+import { authUrl, restUrl, sessionResponse } from '../../test/supabase';
+import { deleteMyAccount, exchangeCode, sendMagicLink, signOut } from './authApi';
 
 /** Supabase Auth's error body shape, as observed from supabase-js 2.116. */
 function authError(status: number, errorCode: string) {
@@ -84,5 +84,60 @@ describe('exchangeCode', () => {
     await sendMagicLink('reader@example.com', '/lists');
 
     expect(await exchangeCode('an-old-code')).toEqual({ ok: false, reason: 'expired' });
+  });
+});
+
+/** A real session in this browser: ask for a link, then exchange its code. */
+async function signInForReal() {
+  server.use(
+    http.post(authUrl('otp'), () => HttpResponse.json({})),
+    http.post(authUrl('token'), () => HttpResponse.json(sessionResponse())),
+  );
+  await sendMagicLink('reader@example.com', '/account');
+  await exchangeCode('code-from-the-email');
+}
+
+describe('signOut', () => {
+  it("ends this browser's session", async () => {
+    await signInForReal();
+    server.use(http.post(authUrl('logout'), () => new HttpResponse(null, { status: 204 })));
+
+    expect(await signOut()).toBe(true);
+  });
+
+  it('reports failure when Supabase could not end the session', async () => {
+    await signInForReal();
+    server.use(
+      http.post(authUrl('logout'), () =>
+        HttpResponse.json({ code: 500, error_code: 'unexpected_failure', msg: 'boom' }, { status: 500 }),
+      ),
+    );
+
+    expect(await signOut()).toBe(false);
+  });
+});
+
+describe('deleteMyAccount', () => {
+  it('calls delete_my_account', async () => {
+    let called = false;
+    server.use(
+      http.post(restUrl('rpc/delete_my_account'), () => {
+        called = true;
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+
+    expect(await deleteMyAccount()).toBe(true);
+    expect(called).toBe(true);
+  });
+
+  it('reports failure when the database refuses', async () => {
+    server.use(
+      http.post(restUrl('rpc/delete_my_account'), () =>
+        HttpResponse.json({ message: 'Service Unavailable' }, { status: 503 }),
+      ),
+    );
+
+    expect(await deleteMyAccount()).toBe(false);
   });
 });

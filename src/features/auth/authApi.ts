@@ -42,3 +42,26 @@ export async function exchangeCode(code: string): Promise<ExchangeResult> {
   // already used), and anything unexpected: a new link fixes all of them.
   return { ok: false, reason: 'expired' };
 }
+
+/** Ends the session in this browser. False when Supabase couldn't end it. */
+export async function signOut(): Promise<boolean> {
+  // 'local': this browser only. Other devices stay signed in.
+  const { error } = await supabase.auth.signOut({ scope: 'local' });
+  return !error;
+}
+
+/**
+ * Deletes the signed-in user's account and all their entries through the
+ * delete_my_account database function, then clears this browser's session.
+ * False when the database refused, in which case nothing was deleted.
+ */
+export async function deleteMyAccount(): Promise<boolean> {
+  const { error } = await supabase.rpc('delete_my_account');
+  if (error) return false;
+
+  // The user no longer exists, so Supabase answers this request with an
+  // error. supabase-js still clears the local session for such answers
+  // (401, 403, 404), and that's the only part left to do.
+  await supabase.auth.signOut({ scope: 'local' });
+  return true;
+}

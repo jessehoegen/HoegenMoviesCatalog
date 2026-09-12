@@ -52,4 +52,16 @@ describe('App routing', () => {
 
     expect(await screen.findByRole('heading', { name: 'My lists' })).toBeInTheDocument();
   });
+
+  it('serves the account page inside the layout', () => {
+    server.use(
+      http.get('/api/tmdb/watch/providers/regions', () =>
+        HttpResponse.json({ results: regionsFixture }),
+      ),
+    );
+
+    renderWithProviders(<App />, { route: '/account?region=NL', auth: signedIn });
+
+    expect(screen.getByRole('heading', { name: 'Account' })).toBeInTheDocument();
+  });
 });
