@@ -72,7 +72,10 @@ describe('AccountPage', () => {
       http.post(authUrl('otp'), () => HttpResponse.json({})),
       http.post(authUrl('token'), () => HttpResponse.json(sessionResponse())),
       http.post(authUrl('logout'), () =>
-        HttpResponse.json({ code: 500, error_code: 'unexpected_failure', msg: 'boom' }, { status: 500 }),
+        HttpResponse.json(
+          { code: 500, error_code: 'unexpected_failure', msg: 'boom' },
+          { status: 500 },
+        ),
       ),
     );
     await sendMagicLink('reader@example.com', '/account');
@@ -109,15 +112,17 @@ describe('AccountPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Delete my account' }));
 
     expect(await screen.findByText('Your account has been deleted.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to the catalog' }).getAttribute('href')).toBe(
-      '/browse?region=NL',
-    );
+    expect(
+      screen.getByRole('link', { name: 'Back to the catalog' }).getAttribute('href'),
+    ).toBe('/browse?region=NL');
     expect(calls.count).toBe(1);
     expect(queryClient.getQueryData(listsKeys.all(testUser.id))).toBeUndefined();
   });
 
   it('says so when deletion fails, and keeps the account', async () => {
-    mockDeleteFunction(() => HttpResponse.json({ message: 'Service Unavailable' }, { status: 503 }));
+    mockDeleteFunction(() =>
+      HttpResponse.json({ message: 'Service Unavailable' }, { status: 503 }),
+    );
     renderAccount();
 
     await userEvent.click(screen.getByRole('button', { name: 'Delete account' }));

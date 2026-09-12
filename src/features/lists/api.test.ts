@@ -105,7 +105,9 @@ describe('saveEntry', () => {
         url = new URL(request.url);
         prefer = request.headers.get('prefer');
         body = await request.json();
-        return HttpResponse.json([{ is_favorite: false, status: 'watched' }], { status: 201 });
+        return HttpResponse.json([{ is_favorite: false, status: 'watched' }], {
+          status: 201,
+        });
       }),
     );
 
@@ -166,7 +168,9 @@ describe('saveEntry', () => {
 
 describe('entryToMovieSummary', () => {
   it('shapes a row like the TMDB summaries that MovieCard displays', () => {
-    expect(entryToMovieSummary(entryRow({ release_date: null, vote_average: null }))).toEqual({
+    expect(
+      entryToMovieSummary(entryRow({ release_date: null, vote_average: null })),
+    ).toEqual({
       id: 550,
       title: 'Fight Club',
       overview: '',

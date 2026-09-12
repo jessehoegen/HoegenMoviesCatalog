@@ -32,7 +32,10 @@ export function AccountNav({ region }: { region: string }) {
   if (AUTH_PAGES.includes(location.pathname)) return null;
 
   return (
-    <Link to={signInPath(region, location.pathname + location.search)} className={LINK_CLASSES}>
+    <Link
+      to={signInPath(region, location.pathname + location.search)}
+      className={LINK_CLASSES}
+    >
       Sign in
     </Link>
   );

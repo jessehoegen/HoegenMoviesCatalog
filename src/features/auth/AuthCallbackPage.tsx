@@ -22,7 +22,8 @@ export function AuthCallbackPage() {
   const code = searchParams.get('code');
   // Supabase redirects here with ?error=... when it rejected the link itself,
   // for example an expired one. A link with no code at all is treated the same.
-  const linkFailure: FailureReason | null = searchParams.get('error') || !code ? 'expired' : null;
+  const linkFailure: FailureReason | null =
+    searchParams.get('error') || !code ? 'expired' : null;
 
   // The code works once. React StrictMode runs effects twice in development,
   // and a second exchange would fail after the first succeeded, showing an

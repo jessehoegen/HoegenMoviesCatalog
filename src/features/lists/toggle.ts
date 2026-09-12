@@ -17,7 +17,10 @@ export type ListAction = 'favorite' | 'wishlist' | 'watched';
  * movie replaces the status rather than adding a second one: the database's
  * "mutually exclusive" rule and this function agree by construction.
  */
-export function nextFlags(current: EntryFlags | null, action: ListAction): EntryFlags | null {
+export function nextFlags(
+  current: EntryFlags | null,
+  action: ListAction,
+): EntryFlags | null {
   const flags = current ?? { isFavorite: false, status: null };
 
   const next: EntryFlags =

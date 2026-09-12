@@ -20,7 +20,8 @@ import type { EntryFlags } from './toggle';
 // sign-out, and a different account can never be served another's cache.
 export const listsKeys = {
   user: (userId: string) => ['lists', userId] as const,
-  entry: (userId: string, movieId: number) => ['lists', userId, 'entry', movieId] as const,
+  entry: (userId: string, movieId: number) =>
+    ['lists', userId, 'entry', movieId] as const,
   all: (userId: string) => ['lists', userId, 'all'] as const,
 };
 

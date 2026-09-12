@@ -12,7 +12,10 @@ describe('nextFlags', () => {
   });
 
   it('adds a movie to the wishlist', () => {
-    expect(nextFlags(null, 'wishlist')).toEqual({ isFavorite: false, status: 'wishlist' });
+    expect(nextFlags(null, 'wishlist')).toEqual({
+      isFavorite: false,
+      status: 'wishlist',
+    });
   });
 
   it('moves a wishlisted movie to watched in one step', () => {

@@ -8,5 +8,7 @@ export function SignInRedirect() {
   const { region } = useRegion();
 
   // replace: Back from the sign-in page must not land here and bounce again.
-  return <Navigate to={signInPath(region, location.pathname + location.search)} replace />;
+  return (
+    <Navigate to={signInPath(region, location.pathname + location.search)} replace />
+  );
 }

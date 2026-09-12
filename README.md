@@ -15,6 +15,11 @@ cp .env.example .env
 Add a TMDB API Read Access Token to `.env` as `TMDB_TOKEN`. Create one at
 https://www.themoviedb.org/settings/api.
 
+Accounts and lists need a Supabase project (see **Accounts and lists** below).
+Add its URL and publishable key to `.env` as `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_PUBLISHABLE_KEY`. Without them, browsing and search still work;
+the sign-in page explains what is missing.
+
 Run the app with the [Vercel CLI](https://vercel.com/docs/cli), which serves the
 Vite front end and the TMDB proxy function together:
 
@@ -53,12 +58,49 @@ comes back unchanged.
 Tests use [MSW](https://mswjs.io/) to intercept requests at the network layer,
 so the suite runs with no API token, no network access, and no rate limits.
 
+## Accounts and lists
+
+Signed-in users keep three lists: favorites, a wishlist, and watched. Sign-in
+is an emailed magic link (Supabase Auth). The browser talks to Supabase
+directly. Its publishable key is public by design; the protection is
+row-level security in the database, which lets each user read and change only
+their own rows. The schema, policies and grants are in
+`supabase/migrations/`, and `supabase/tests/` checks them in PGlite, a real
+Postgres that runs inside the test process.
+
+One-time Supabase setup:
+
+1. Create a project at https://supabase.com (the free plan is enough).
+2. In the SQL editor, paste and run
+   `supabase/migrations/20260912000000_accounts_and_lists.sql`.
+3. In **Authentication → URL Configuration**, set the Site URL to the
+   production address and add these Redirect URLs:
+   - `https://hoegen-movies-catalog.vercel.app/**`
+   - `http://localhost:3000/**`
+   - `https://hoegen-movies-catalog-*-<team-slug>.vercel.app/**`, where the
+     team slug is the last part of any preview URL in the Vercel dashboard.
+
+   If a sign-in link lands on the home page instead of `/auth/callback`, the
+   address it was sent from is missing from this list: Supabase falls back to
+   the Site URL without saying so.
+
+4. Copy the project URL and publishable key from **Project Settings → API
+   Keys** into `.env` and into Vercel (see **Deployment**).
+
+**Until a custom email provider is set up, magic links only reach members of
+the Supabase project's team, at most 2 per hour.** That is Supabase's built-in
+email service. Opening sign-up to the public needs a domain verified with an
+email provider such as Resend, entered in Supabase's SMTP settings. See
+"Launch prerequisites" in the spec.
+
 ## Deployment
 
 Pushing to `main` deploys to production on Vercel; other branches get preview
-deployments. `TMDB_TOKEN` must be set in the Vercel project's environment
-variables for both Production and Preview. `.env` is gitignored and never
-committed.
+deployments. Set `TMDB_TOKEN`, `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_PUBLISHABLE_KEY` in the Vercel project's environment variables
+for both Production and Preview, **without** a custom preview branch: a
+variable tied to one branch is Preview-only, and Production silently gets
+nothing. `.env` is gitignored and never committed.
 
 ## Known constraints
 
@@ -71,3 +113,9 @@ committed.
   how you reach specific titles.
 - Streaming availability is region-specific and covers subscription services
   only — rental and purchase availability is deliberately excluded.
+- Supabase's free plan pauses a project after a week without enough database
+  activity. Sign-in and lists then fail until it is resumed from the dashboard
+  (data is kept); browsing and search are unaffected.
+- A magic link only works in the browser that asked for it: that browser holds
+  the secret the link is issued against (PKCE). Opening it elsewhere shows how
+  to get a new one.

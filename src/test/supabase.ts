@@ -16,7 +16,10 @@ export function authUrl(path: string): string {
 }
 
 function base64Url(value: object): string {
-  return btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return btoa(JSON.stringify(value))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
 }
 
 /** The body Supabase Auth returns from POST /auth/v1/token, for MSW handlers. */
@@ -26,7 +29,12 @@ export function sessionResponse(user: AppUser = testUser) {
   // values. Nothing in the browser checks the signature.
   const accessToken = [
     base64Url({ alg: 'HS256', typ: 'JWT' }),
-    base64Url({ sub: user.id, email: user.email, role: 'authenticated', exp: now + 3600 }),
+    base64Url({
+      sub: user.id,
+      email: user.email,
+      role: 'authenticated',
+      exp: now + 3600,
+    }),
     'test-signature',
   ].join('.');
 

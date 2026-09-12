@@ -25,9 +25,9 @@ describe('shouldRetry', () => {
   });
 
   it('does not retry a lists request the database refused', () => {
-    expect(shouldRetry(0, new ListsError(403, 'new row violates row-level security policy'))).toBe(
-      false,
-    );
+    expect(
+      shouldRetry(0, new ListsError(403, 'new row violates row-level security policy')),
+    ).toBe(false);
     expect(shouldRetry(0, new ListsError(400, 'violates check constraint'))).toBe(false);
   });
 

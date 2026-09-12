@@ -50,7 +50,10 @@ function toFlags(row: FlagsRow): EntryFlags {
   return { isFavorite: row.is_favorite, status: row.status };
 }
 
-export async function fetchEntryFlags(userId: string, movieId: number): Promise<EntryFlags | null> {
+export async function fetchEntryFlags(
+  userId: string,
+  movieId: number,
+): Promise<EntryFlags | null> {
   const { data, error, status } = await supabase
     .from(TABLE)
     .select('is_favorite, status')

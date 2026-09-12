@@ -49,7 +49,9 @@ describe('SignInPage', () => {
 
     await requestLink();
 
-    expect(await screen.findByRole('heading', { name: 'Check your email' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Check your email' }),
+    ).toBeInTheDocument();
     expect(screen.getByText('reader@example.com')).toBeInTheDocument();
     expect(seen.redirectTo).toContain('/auth/callback?next=%2Fmovie%2F550%3Fregion%3DNL');
   });

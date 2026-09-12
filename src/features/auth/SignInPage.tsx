@@ -37,8 +37,8 @@ export function SignInPage() {
         </p>
         <p className="mt-1 text-sm text-neutral-500">
           Site owner: set <code className="text-neutral-300">VITE_SUPABASE_URL</code> and{' '}
-          <code className="text-neutral-300">VITE_SUPABASE_PUBLISHABLE_KEY</code> in the Vercel
-          project's environment variables, then redeploy.
+          <code className="text-neutral-300">VITE_SUPABASE_PUBLISHABLE_KEY</code> in the
+          Vercel project's environment variables, then redeploy.
         </p>
       </div>
     );
@@ -54,7 +54,11 @@ export function SignInPage() {
     const address = email.trim();
     setPhase({ name: 'sending' });
     const result = await sendMagicLink(address, next);
-    setPhase(result.ok ? { name: 'sent', email: address } : { name: 'failed', reason: result.reason });
+    setPhase(
+      result.ok
+        ? { name: 'sent', email: address }
+        : { name: 'failed', reason: result.reason },
+    );
   }
 
   if (phase.name === 'sent') {
@@ -62,7 +66,8 @@ export function SignInPage() {
       <section className="mx-auto max-w-sm py-12">
         <h1 className="text-2xl font-semibold">Check your email</h1>
         <p className="mt-3 text-neutral-300">
-          We sent a sign-in link to <strong className="text-neutral-100">{phase.email}</strong>.
+          We sent a sign-in link to{' '}
+          <strong className="text-neutral-100">{phase.email}</strong>.
         </p>
         <button
           type="button"
@@ -79,7 +84,10 @@ export function SignInPage() {
     <section className="mx-auto max-w-sm py-12">
       <h1 className="text-2xl font-semibold">Sign in</h1>
 
-      <form onSubmit={(event) => void handleSubmit(event)} className="mt-6 flex flex-col gap-3">
+      <form
+        onSubmit={(event) => void handleSubmit(event)}
+        className="mt-6 flex flex-col gap-3"
+      >
         <label htmlFor="sign-in-email" className="text-sm text-neutral-300">
           Email address
         </label>
@@ -107,7 +115,8 @@ export function SignInPage() {
       </form>
 
       <p className="mt-6 text-xs text-neutral-500">
-        We store your email address and your lists. You can delete your account at any time.
+        We store your email address and your lists. You can delete your account at any
+        time.
       </p>
     </section>
   );

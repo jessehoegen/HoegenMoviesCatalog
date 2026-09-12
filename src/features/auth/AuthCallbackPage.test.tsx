@@ -29,7 +29,9 @@ function renderCallback(route: string, { strict = false } = {}) {
       <Route path="*" element={<LocationProbe />} />
     </Routes>
   );
-  return renderWithProviders(strict ? <StrictMode>{routes}</StrictMode> : routes, { route });
+  return renderWithProviders(strict ? <StrictMode>{routes}</StrictMode> : routes, {
+    route,
+  });
 }
 
 /** Counts POST /auth/v1/token calls, answering with a session or an error. */
@@ -83,11 +85,13 @@ describe('AuthCallbackPage', () => {
     renderCallback('/auth/callback?code=abc&next=%2Flists');
 
     expect(
-      await screen.findByText('Open the sign-in link in the same browser where you asked for it.'),
+      await screen.findByText(
+        'Open the sign-in link in the same browser where you asked for it.',
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Send a new link' }).getAttribute('href')).toContain(
-      '/sign-in?next=%2Flists',
-    );
+    expect(
+      screen.getByRole('link', { name: 'Send a new link' }).getAttribute('href'),
+    ).toContain('/sign-in?next=%2Flists');
   });
 
   it('says expired, without an exchange, when Supabase redirected with an error', async () => {

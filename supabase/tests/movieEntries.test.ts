@@ -169,7 +169,15 @@ describe('movie_entries: row-level security', () => {
 });
 
 describe('movie_entries: grants', () => {
-  const PRIVILEGES = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER'];
+  const PRIVILEGES = [
+    'SELECT',
+    'INSERT',
+    'UPDATE',
+    'DELETE',
+    'TRUNCATE',
+    'REFERENCES',
+    'TRIGGER',
+  ];
 
   async function privilegesOf(role: string): Promise<string[]> {
     const { rows } = await db.query<{ privilege: string }>(
@@ -191,7 +199,12 @@ describe('movie_entries: grants', () => {
     // not apply to it. Supabase's old defaults granted it.
     await actAsSuperuser();
 
-    expect(await privilegesOf('authenticated')).toEqual(['SELECT', 'INSERT', 'UPDATE', 'DELETE']);
+    expect(await privilegesOf('authenticated')).toEqual([
+      'SELECT',
+      'INSERT',
+      'UPDATE',
+      'DELETE',
+    ]);
   });
 });
 
@@ -246,7 +259,9 @@ describe('movie_entries: checks', () => {
     );
     await actAs('authenticated', ALICE);
 
-    await db.query(`update public.movie_entries set status = 'watched' where movie_id = 13`);
+    await db.query(
+      `update public.movie_entries set status = 'watched' where movie_id = 13`,
+    );
     const { rows } = await db.query<{ moved: boolean }>(
       `select updated_at > '2001-01-01' as moved from public.movie_entries where movie_id = 13`,
     );

@@ -10,7 +10,11 @@ import { useSession } from './useSession';
 function SessionProbe() {
   const session = useSession();
   return (
-    <p>{session.status === 'signed-in' ? `signed in as ${session.user.email}` : session.status}</p>
+    <p>
+      {session.status === 'signed-in'
+        ? `signed in as ${session.user.email}`
+        : session.status}
+    </p>
   );
 }
 
@@ -45,7 +49,9 @@ describe('AuthProvider', () => {
       await supabase.auth.signInWithOtp({ email: 'reader@example.com' });
       await supabase.auth.exchangeCodeForSession('code-from-the-email');
     });
-    expect(await screen.findByText('signed in as reader@example.com')).toBeInTheDocument();
+    expect(
+      await screen.findByText('signed in as reader@example.com'),
+    ).toBeInTheDocument();
 
     await act(async () => {
       await supabase.auth.signOut({ scope: 'local' });

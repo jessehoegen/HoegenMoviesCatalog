@@ -7,7 +7,10 @@ import { deleteMyAccount, exchangeCode, sendMagicLink, signOut } from './authApi
 
 /** Supabase Auth's error body shape, as observed from supabase-js 2.116. */
 function authError(status: number, errorCode: string) {
-  return HttpResponse.json({ code: status, error_code: errorCode, msg: errorCode }, { status });
+  return HttpResponse.json(
+    { code: status, error_code: errorCode, msg: errorCode },
+    { status },
+  );
 }
 
 describe('sendMagicLink', () => {
@@ -29,7 +32,9 @@ describe('sendMagicLink', () => {
   });
 
   it('reports the email rate limit', async () => {
-    server.use(http.post(authUrl('otp'), () => authError(429, 'over_email_send_rate_limit')));
+    server.use(
+      http.post(authUrl('otp'), () => authError(429, 'over_email_send_rate_limit')),
+    );
 
     expect(await sendMagicLink('reader@example.com', '/lists')).toEqual({
       ok: false,
@@ -101,12 +106,14 @@ async function signInForReal() {
 describe('signOut', () => {
   it("ends this browser's session", async () => {
     await signInForReal();
-    server.use(http.post(authUrl('logout'), () => new HttpResponse(null, { status: 204 })));
+    server.use(
+      http.post(authUrl('logout'), () => new HttpResponse(null, { status: 204 })),
+    );
 
     expect(await signOut()).toBe(true);
   });
 
-  it("still reports success when the logout request fails but Supabase clears the session anyway", async () => {
+  it('still reports success when the logout request fails but Supabase clears the session anyway', async () => {
     // supabase-js clears this browser's session before reporting most
     // failures (anything but 401/403/404), so a 500 here still ends up
     // signed out. signOut()'s contract is about the session, not the
@@ -114,7 +121,10 @@ describe('signOut', () => {
     await signInForReal();
     server.use(
       http.post(authUrl('logout'), () =>
-        HttpResponse.json({ code: 500, error_code: 'unexpected_failure', msg: 'boom' }, { status: 500 }),
+        HttpResponse.json(
+          { code: 500, error_code: 'unexpected_failure', msg: 'boom' },
+          { status: 500 },
+        ),
       ),
     );
 

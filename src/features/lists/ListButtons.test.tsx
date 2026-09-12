@@ -39,7 +39,9 @@ function renderButtons(auth: AuthState) {
 function mockEntry(flags: EntryFlags | null) {
   server.use(
     http.get(restUrl('movie_entries'), () =>
-      HttpResponse.json(flags ? [{ is_favorite: flags.isFavorite, status: flags.status }] : []),
+      HttpResponse.json(
+        flags ? [{ is_favorite: flags.isFavorite, status: flags.status }] : [],
+      ),
     ),
   );
 }
@@ -59,11 +61,13 @@ describe('ListButtons', () => {
     }
   });
 
-  it("shows which lists the movie is on", async () => {
+  it('shows which lists the movie is on', async () => {
     mockEntry({ isFavorite: false, status: 'wishlist' });
     renderButtons(signedIn);
 
-    await waitFor(() => expect(button('Wishlist')).toHaveAttribute('aria-pressed', 'true'));
+    await waitFor(() =>
+      expect(button('Wishlist')).toHaveAttribute('aria-pressed', 'true'),
+    );
     expect(button('Watched')).toHaveAttribute('aria-pressed', 'false');
     expect(button('Favorite')).toHaveAttribute('aria-pressed', 'false');
   });
@@ -74,7 +78,9 @@ describe('ListButtons', () => {
     server.use(
       http.post(restUrl('movie_entries'), async ({ request }) => {
         body = (await request.json()) as { status?: string };
-        return HttpResponse.json([{ is_favorite: false, status: 'watched' }], { status: 201 });
+        return HttpResponse.json([{ is_favorite: false, status: 'watched' }], {
+          status: 201,
+        });
       }),
     );
     renderButtons(signedIn);
@@ -82,7 +88,9 @@ describe('ListButtons', () => {
 
     await userEvent.click(button('Watched'));
 
-    await waitFor(() => expect(button('Watched')).toHaveAttribute('aria-pressed', 'true'));
+    await waitFor(() =>
+      expect(button('Watched')).toHaveAttribute('aria-pressed', 'true'),
+    );
     expect(button('Wishlist')).toHaveAttribute('aria-pressed', 'false');
     expect(body?.status).toBe('watched');
   });
@@ -97,11 +105,15 @@ describe('ListButtons', () => {
       }),
     );
     renderButtons(signedIn);
-    await waitFor(() => expect(button('Wishlist')).toHaveAttribute('aria-pressed', 'true'));
+    await waitFor(() =>
+      expect(button('Wishlist')).toHaveAttribute('aria-pressed', 'true'),
+    );
 
     await userEvent.click(button('Wishlist'));
 
-    await waitFor(() => expect(button('Wishlist')).toHaveAttribute('aria-pressed', 'false'));
+    await waitFor(() =>
+      expect(button('Wishlist')).toHaveAttribute('aria-pressed', 'false'),
+    );
     expect(deleted).toBe(true);
   });
 
@@ -126,7 +138,9 @@ describe('ListButtons', () => {
     await waitFor(() => expect(button('Favorite')).toBeDisabled());
     expect(button('Favorite')).toHaveAttribute('aria-pressed', 'false');
     release();
-    await waitFor(() => expect(button('Favorite')).toHaveAttribute('aria-pressed', 'true'));
+    await waitFor(() =>
+      expect(button('Favorite')).toHaveAttribute('aria-pressed', 'true'),
+    );
     expect(button('Favorite')).toBeEnabled();
   });
 
@@ -142,7 +156,9 @@ describe('ListButtons', () => {
 
     await userEvent.click(button('Favorite'));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't save. Try again.");
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "Couldn't save. Try again.",
+    );
     expect(button('Favorite')).toHaveAttribute('aria-pressed', 'false');
   });
 
@@ -154,11 +170,15 @@ describe('ListButtons', () => {
     );
     renderButtons(signedIn);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load your lists.");
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "Couldn't load your lists.",
+    );
 
     mockEntry({ isFavorite: true, status: null });
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
-    await waitFor(() => expect(button('Favorite')).toHaveAttribute('aria-pressed', 'true'));
+    await waitFor(() =>
+      expect(button('Favorite')).toHaveAttribute('aria-pressed', 'true'),
+    );
   });
 });
