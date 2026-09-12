@@ -24,4 +24,17 @@ describe('App routing', () => {
       screen.getByRole('link', { name: /back to the catalog/i }).getAttribute('href'),
     ).toContain('/browse');
   });
+
+  it('serves the sign-in page inside the layout', () => {
+    server.use(
+      http.get('/api/tmdb/watch/providers/regions', () =>
+        HttpResponse.json({ results: regionsFixture }),
+      ),
+    );
+
+    renderWithProviders(<App />, { route: '/sign-in?region=NL' });
+
+    expect(screen.getByRole('link', { name: /streaming catalog/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Sign in' })).toBeInTheDocument();
+  });
 });

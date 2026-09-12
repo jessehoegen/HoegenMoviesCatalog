@@ -1,6 +1,8 @@
 import { Link, Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './app/Layout';
 import { useRegion, withRegion } from './app/useRegion';
+import { AuthCallbackPage } from './features/auth/AuthCallbackPage';
+import { SignInPage } from './features/auth/SignInPage';
 import { BrowsePage } from './features/browse/BrowsePage';
 import { MovieDetailPage } from './features/movie/MovieDetailPage';
 import { SearchPage } from './features/search/SearchPage';
@@ -34,6 +36,8 @@ export default function App() {
         <Route path="/browse" element={<BrowsePage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/movie/:id" element={<MovieDetailPage />} />
+        <Route path="/sign-in" element={<SignInPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
