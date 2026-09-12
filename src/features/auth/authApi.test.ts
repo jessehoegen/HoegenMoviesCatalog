@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { http, HttpResponse } from 'msw';
+import { supabase } from '../../lib/supabase';
 import { server } from '../../test/server';
 import { authUrl, restUrl, sessionResponse } from '../../test/supabase';
 import { deleteMyAccount, exchangeCode, sendMagicLink, signOut } from './authApi';
@@ -105,7 +106,11 @@ describe('signOut', () => {
     expect(await signOut()).toBe(true);
   });
 
-  it('reports failure when Supabase could not end the session', async () => {
+  it("still reports success when the logout request fails but Supabase clears the session anyway", async () => {
+    // supabase-js clears this browser's session before reporting most
+    // failures (anything but 401/403/404), so a 500 here still ends up
+    // signed out. signOut()'s contract is about the session, not the
+    // request, so it must report true.
     await signInForReal();
     server.use(
       http.post(authUrl('logout'), () =>
@@ -113,7 +118,8 @@ describe('signOut', () => {
       ),
     );
 
-    expect(await signOut()).toBe(false);
+    expect(await signOut()).toBe(true);
+    expect((await supabase.auth.getSession()).data.session).toBeNull();
   });
 });
 

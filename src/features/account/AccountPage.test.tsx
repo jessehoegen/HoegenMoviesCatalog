@@ -63,8 +63,11 @@ describe('AccountPage', () => {
     expect(queryClient.getQueryData(listsKeys.all(testUser.id))).toBeUndefined();
   });
 
-  it('says so when signing out fails', async () => {
-    // A real session, so that signing out has to ask Supabase.
+  it('still signs out, clears the cache, and returns to the catalog when the logout request itself fails', async () => {
+    // A real session, so that signing out has to ask Supabase. supabase-js
+    // clears this browser's session before reporting most logout failures
+    // (anything but 401/403/404), so the request failing here must not
+    // strand the user on this page or leave their lists cached.
     server.use(
       http.post(authUrl('otp'), () => HttpResponse.json({})),
       http.post(authUrl('token'), () => HttpResponse.json(sessionResponse())),
@@ -74,11 +77,12 @@ describe('AccountPage', () => {
     );
     await sendMagicLink('reader@example.com', '/account');
     await exchangeCode('code-from-the-email');
-    renderAccount();
+    const { queryClient } = renderAccount();
 
     await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't sign out. Try again.");
+    expect(await screen.findByTestId('location')).toHaveTextContent('/browse?region=NL');
+    expect(queryClient.getQueryData(listsKeys.all(testUser.id))).toBeUndefined();
   });
 
   it('asks for confirmation before deleting, and can be cancelled', async () => {

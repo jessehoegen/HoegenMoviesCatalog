@@ -43,11 +43,20 @@ export async function exchangeCode(code: string): Promise<ExchangeResult> {
   return { ok: false, reason: 'expired' };
 }
 
-/** Ends the session in this browser. False when Supabase couldn't end it. */
+/**
+ * Ends the session in this browser. True when this browser's session is
+ * gone, whether or not the request to Supabase succeeded: for most failures
+ * (anything but 401/403/404) supabase-js still clears the local session
+ * before reporting the error, so the error alone doesn't mean the session
+ * survived. False only when the session is still there.
+ */
 export async function signOut(): Promise<boolean> {
   // 'local': this browser only. Other devices stay signed in.
   const { error } = await supabase.auth.signOut({ scope: 'local' });
-  return !error;
+  if (!error) return true;
+
+  const { data } = await supabase.auth.getSession();
+  return data.session === null;
 }
 
 /**
