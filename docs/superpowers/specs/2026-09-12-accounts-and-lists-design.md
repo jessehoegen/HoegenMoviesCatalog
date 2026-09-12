@@ -7,6 +7,34 @@
 section recorded two decisions this spec keeps: email magic-link sign-in, and
 wishlist and watched being mutually exclusive)
 
+> **Amendment (2026-09-12, during implementation planning).** Throwaway probes
+> against supabase-js 2.116, PGlite 0.5.8 (Postgres 18.3) and the project's
+> test setup changed these details. The plan
+> (`docs/superpowers/plans/2026-09-12-accounts-and-lists.md`) has the full
+> reasoning under "Deviations from the spec".
+>
+> 1. The migration revokes **all** privileges from both `anon` and
+>    `authenticated` before granting four. Supabase's old defaults gave
+>    `authenticated` `TRUNCATE`, which RLS does not cover. Fixed in the SQL
+>    below.
+> 2. The client turns off supabase-js's own read retries (`db: { retry: false }`);
+>    the "never retry a 4xx" rule lives in the app's shared `shouldRetry`
+>    rather than in each list hook.
+> 3. A link opened in another browser fails inside supabase-js with
+>    `pkce_code_verifier_not_found`, before any request. `flow_state_not_found`
+>    means the code is older than 5 minutes or already used, so it shows the
+>    "expired" message. Fixed in the error table below.
+> 4. Missing Supabase variables produce a placeholder client plus an
+>    `isSupabaseConfigured` flag, because `createClient` throws on an empty URL.
+> 5. `AuthProvider` relies on the `INITIAL_SESSION` event instead of a separate
+>    `getSession()` call.
+> 6. The lists page shows its own error message (`ErrorState`'s wording is
+>    about TMDB), and `MovieGrid` gains an optional `hideEndOfResults`.
+> 7. The account page guards itself, because it must show "Your account has
+>    been deleted" to someone who is by then signed out.
+> 8. Database-rule tests clone one base database per test (a fresh PGlite
+>    takes 3–5 s here; a clone, 0.75 s).
+
 ## Purpose
 
 Let visitors create an account and keep three lists of movies: **favorites**,
@@ -180,9 +208,10 @@ alter table public.movie_entries enable row level security;
 
 -- Grants are explicit. Supabase projects created after 30 May 2026 grant the
 -- API roles nothing on new tables by default (existing projects follow on
--- 30 October 2026); older projects granted everything. Stating the grants
--- makes this file correct under both.
-revoke all on public.movie_entries from anon;
+-- 30 October 2026); older projects granted everything, TRUNCATE included,
+-- and RLS does not apply to TRUNCATE. Revoking everything first makes this
+-- file correct under both.
+revoke all on public.movie_entries from anon, authenticated;
 grant select, insert, update, delete on public.movie_entries to authenticated;
 
 -- (select auth.uid()) rather than auth.uid(): Postgres evaluates it once per
@@ -343,8 +372,8 @@ account has been deleted" with a link to the catalog.
 | `over_email_send_rate_limit` | "Too many sign-in emails. Wait a few minutes and try again." (Common in development: the built-in email allows 2 per hour) |
 | `email_address_invalid` | "That email address can't be used." |
 | Any other send failure | "Couldn't send the sign-in email. Try again." |
-| `otp_expired`, or an `error` in the callback query | "This sign-in link has expired." and **Send a new link** |
-| `bad_code_verifier` or `flow_state_not_found` | "Open the sign-in link in the same browser where you asked for it." and **Send a new link** |
+| `otp_expired`, `flow_state_not_found`, or an `error` in the callback query | "This sign-in link has expired." and **Send a new link** |
+| `pkce_code_verifier_not_found` or `bad_code_verifier` | "Open the sign-in link in the same browser where you asked for it." and **Send a new link** |
 | Callback reached with no `code` and no `error` | Same as expired |
 | Session can no longer be refreshed (expired, or the account was deleted on another device) | Supabase reports the user signed out; list queries stop and the buttons become sign-in links. Until that refresh (up to about an hour after a deletion elsewhere), reads return no rows and saves fail with "Couldn't save", because the user no longer exists |
 | Supabase variables missing | The sign-in page shows an operator-facing message naming `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`; browsing is unaffected |
