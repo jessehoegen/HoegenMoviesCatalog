@@ -25,7 +25,7 @@ describe('useDiscoverMovies', () => {
     let seen: URLSearchParams | undefined;
 
     server.use(
-      http.get('https://api.themoviedb.org/3/discover/movie', ({ request }) => {
+      http.get('/api/tmdb/discover/movie', ({ request }) => {
         seen = new URL(request.url).searchParams;
         return HttpResponse.json({
           page: 1,
@@ -51,7 +51,7 @@ describe('useDiscoverMovies', () => {
 
   it('appends the next page and flattens results in order', async () => {
     server.use(
-      http.get('https://api.themoviedb.org/3/discover/movie', ({ request }) => {
+      http.get('/api/tmdb/discover/movie', ({ request }) => {
         const page = Number(new URL(request.url).searchParams.get('page'));
         return HttpResponse.json({
           page,
@@ -86,7 +86,7 @@ describe('useDiscoverMovies', () => {
 
   it('reports no next page when TMDB exceeds the 500 page ceiling', async () => {
     server.use(
-      http.get('https://api.themoviedb.org/3/discover/movie', () =>
+      http.get('/api/tmdb/discover/movie', () =>
         HttpResponse.json({
           page: 500,
           results: [movieSummaryFixture()],
@@ -114,7 +114,7 @@ describe('useDiscoverMovies', () => {
     const driftedMovie = movieSummaryFixture({ id: 299536, title: 'Drifted Movie' });
 
     server.use(
-      http.get('https://api.themoviedb.org/3/discover/movie', ({ request }) => {
+      http.get('/api/tmdb/discover/movie', ({ request }) => {
         const page = Number(new URL(request.url).searchParams.get('page'));
         const results =
           page === 1
@@ -149,7 +149,7 @@ describe('useSearchMovies', () => {
     let seen: URLSearchParams | undefined;
 
     server.use(
-      http.get('https://api.themoviedb.org/3/search/movie', ({ request }) => {
+      http.get('/api/tmdb/search/movie', ({ request }) => {
         seen = new URL(request.url).searchParams;
         return HttpResponse.json({
           page: 1,
@@ -171,7 +171,7 @@ describe('useSearchMovies', () => {
     let requestCount = 0;
 
     server.use(
-      http.get('https://api.themoviedb.org/3/search/movie', () => {
+      http.get('/api/tmdb/search/movie', () => {
         requestCount++;
         return HttpResponse.json({
           page: 1,

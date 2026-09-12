@@ -29,7 +29,7 @@ function detailFixture(overrides: Partial<TmdbMovieDetail> = {}): TmdbMovieDetai
 
 function renderDetail(route: string) {
   server.use(
-    http.get('https://api.themoviedb.org/3/watch/providers/regions', () =>
+    http.get('/api/tmdb/watch/providers/regions', () =>
       HttpResponse.json({ results: regionsFixture }),
     ),
   );
@@ -47,7 +47,7 @@ describe('MovieDetailPage', () => {
     let seenAppend: string | null = null;
 
     server.use(
-      http.get('https://api.themoviedb.org/3/movie/550', ({ request }) => {
+      http.get('/api/tmdb/movie/550', ({ request }) => {
         seenAppend = new URL(request.url).searchParams.get('append_to_response');
         return HttpResponse.json(detailFixture());
       }),
@@ -64,11 +64,7 @@ describe('MovieDetailPage', () => {
   });
 
   it('lists subscription providers for the selected region', async () => {
-    server.use(
-      http.get('https://api.themoviedb.org/3/movie/550', () =>
-        HttpResponse.json(detailFixture()),
-      ),
-    );
+    server.use(http.get('/api/tmdb/movie/550', () => HttpResponse.json(detailFixture())));
 
     renderDetail('/movie/550?region=NL');
 
@@ -77,7 +73,7 @@ describe('MovieDetailPage', () => {
 
   it('says so plainly when nothing streams it in the region', async () => {
     server.use(
-      http.get('https://api.themoviedb.org/3/movie/550', () =>
+      http.get('/api/tmdb/movie/550', () =>
         HttpResponse.json(detailFixture({ 'watch/providers': { results: {} } })),
       ),
     );
@@ -90,11 +86,7 @@ describe('MovieDetailPage', () => {
   });
 
   it('offers a back link to browse rather than a history step', async () => {
-    server.use(
-      http.get('https://api.themoviedb.org/3/movie/550', () =>
-        HttpResponse.json(detailFixture()),
-      ),
-    );
+    server.use(http.get('/api/tmdb/movie/550', () => HttpResponse.json(detailFixture())));
 
     // The page is designed to be shared: on a deep link there is no history
     // entry to step back to, and navigate(-1) would leave the app or do
@@ -108,11 +100,7 @@ describe('MovieDetailPage', () => {
   });
 
   it('names the region rather than showing its code', async () => {
-    server.use(
-      http.get('https://api.themoviedb.org/3/movie/550', () =>
-        HttpResponse.json(detailFixture()),
-      ),
-    );
+    server.use(http.get('/api/tmdb/movie/550', () => HttpResponse.json(detailFixture())));
 
     renderDetail('/movie/550?region=NL');
 
@@ -123,7 +111,7 @@ describe('MovieDetailPage', () => {
 
   it('renders a not-found view for a 404 rather than an error view', async () => {
     server.use(
-      http.get('https://api.themoviedb.org/3/movie/999999', () =>
+      http.get('/api/tmdb/movie/999999', () =>
         HttpResponse.json(
           {
             status_code: 34,

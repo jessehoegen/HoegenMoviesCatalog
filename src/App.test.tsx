@@ -9,7 +9,7 @@ import App from './App';
 describe('App routing', () => {
   it('keeps the header and offers a way back on an unmatched path', () => {
     server.use(
-      http.get('https://api.themoviedb.org/3/watch/providers/regions', () =>
+      http.get('/api/tmdb/watch/providers/regions', () =>
         HttpResponse.json({ results: regionsFixture }),
       ),
     );

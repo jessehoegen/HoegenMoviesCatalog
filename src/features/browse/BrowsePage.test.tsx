@@ -20,13 +20,13 @@ function LocationProbe() {
 
 function mockReferenceData() {
   server.use(
-    http.get('https://api.themoviedb.org/3/genre/movie/list', () =>
+    http.get('/api/tmdb/genre/movie/list', () =>
       HttpResponse.json({ genres: genresFixture }),
     ),
-    http.get('https://api.themoviedb.org/3/watch/providers/regions', () =>
+    http.get('/api/tmdb/watch/providers/regions', () =>
       HttpResponse.json({ results: regionsFixture }),
     ),
-    http.get('https://api.themoviedb.org/3/watch/providers/movie', () =>
+    http.get('/api/tmdb/watch/providers/movie', () =>
       HttpResponse.json({ results: providersFixture }),
     ),
   );
@@ -55,7 +55,7 @@ describe('BrowsePage', () => {
     let seenRegion: string | null = null;
 
     server.use(
-      http.get('https://api.themoviedb.org/3/discover/movie', ({ request }) => {
+      http.get('/api/tmdb/discover/movie', ({ request }) => {
         seenRegion = new URL(request.url).searchParams.get('watch_region');
         return HttpResponse.json({
           page: 1,
@@ -77,7 +77,7 @@ describe('BrowsePage', () => {
     const requestedGenres: (string | null)[] = [];
 
     server.use(
-      http.get('https://api.themoviedb.org/3/discover/movie', ({ request }) => {
+      http.get('/api/tmdb/discover/movie', ({ request }) => {
         requestedGenres.push(new URL(request.url).searchParams.get('with_genres'));
         return HttpResponse.json({
           page: 1,
@@ -104,7 +104,7 @@ describe('BrowsePage', () => {
     let seenRegion: string | null = null;
 
     server.use(
-      http.get('https://api.themoviedb.org/3/discover/movie', ({ request }) => {
+      http.get('/api/tmdb/discover/movie', ({ request }) => {
         seenRegion = new URL(request.url).searchParams.get('watch_region');
         return HttpResponse.json({
           page: 1,
@@ -130,7 +130,7 @@ describe('BrowsePage', () => {
     mockReferenceData();
 
     server.use(
-      http.get('https://api.themoviedb.org/3/discover/movie', () =>
+      http.get('/api/tmdb/discover/movie', () =>
         HttpResponse.json({
           page: 1,
           results: [movieSummaryFixture()],
@@ -151,7 +151,7 @@ describe('BrowsePage', () => {
     mockReferenceData();
 
     server.use(
-      http.get('https://api.themoviedb.org/3/discover/movie', () =>
+      http.get('/api/tmdb/discover/movie', () =>
         HttpResponse.json({
           page: 1,
           results: [movieSummaryFixture()],
@@ -181,7 +181,7 @@ describe('BrowsePage', () => {
     mockReferenceData();
 
     server.use(
-      http.get('https://api.themoviedb.org/3/discover/movie', () =>
+      http.get('/api/tmdb/discover/movie', () =>
         HttpResponse.json({
           page: 1,
           results: [movieSummaryFixture()],
@@ -211,7 +211,7 @@ describe('BrowsePage', () => {
     mockReferenceData();
 
     server.use(
-      http.get('https://api.themoviedb.org/3/discover/movie', () =>
+      http.get('/api/tmdb/discover/movie', () =>
         HttpResponse.json({ page: 1, results: [], total_pages: 0, total_results: 0 }),
       ),
     );

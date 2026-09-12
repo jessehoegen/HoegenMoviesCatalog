@@ -15,7 +15,7 @@ function wrapper({ children }: { children: ReactNode }) {
 describe('reference data queries', () => {
   it('unwraps the genres list from its envelope', async () => {
     server.use(
-      http.get('https://api.themoviedb.org/3/genre/movie/list', () =>
+      http.get('/api/tmdb/genre/movie/list', () =>
         HttpResponse.json({ genres: genresFixture }),
       ),
     );
@@ -28,7 +28,7 @@ describe('reference data queries', () => {
 
   it('unwraps the regions list and sorts it by English name', async () => {
     server.use(
-      http.get('https://api.themoviedb.org/3/watch/providers/regions', () =>
+      http.get('/api/tmdb/watch/providers/regions', () =>
         HttpResponse.json({ results: [regionsFixture[1], regionsFixture[0]] }),
       ),
     );
@@ -43,7 +43,7 @@ describe('reference data queries', () => {
     let seenRegion: string | null = null;
 
     server.use(
-      http.get('https://api.themoviedb.org/3/watch/providers/movie', ({ request }) => {
+      http.get('/api/tmdb/watch/providers/movie', ({ request }) => {
         seenRegion = new URL(request.url).searchParams.get('watch_region');
         return HttpResponse.json({
           results: [providersFixture[1], providersFixture[0]],

@@ -33,7 +33,7 @@ function SearchRoute() {
 
 function mockRegions() {
   server.use(
-    http.get('https://api.themoviedb.org/3/watch/providers/regions', () =>
+    http.get('/api/tmdb/watch/providers/regions', () =>
       HttpResponse.json({ results: regionsFixture }),
     ),
   );

@@ -9,7 +9,7 @@ import { SearchPage } from './SearchPage';
 
 function renderSearch(route: string) {
   server.use(
-    http.get('https://api.themoviedb.org/3/watch/providers/regions', () =>
+    http.get('/api/tmdb/watch/providers/regions', () =>
       HttpResponse.json({ results: regionsFixture }),
     ),
   );
@@ -27,7 +27,7 @@ describe('SearchPage', () => {
     let seenQuery: string | null = null;
 
     server.use(
-      http.get('https://api.themoviedb.org/3/search/movie', ({ request }) => {
+      http.get('/api/tmdb/search/movie', ({ request }) => {
         seenQuery = new URL(request.url).searchParams.get('query');
         return HttpResponse.json({
           page: 1,
@@ -46,7 +46,7 @@ describe('SearchPage', () => {
 
   it('links results to the detail route carrying the region', async () => {
     server.use(
-      http.get('https://api.themoviedb.org/3/search/movie', () =>
+      http.get('/api/tmdb/search/movie', () =>
         HttpResponse.json({
           page: 1,
           results: [movieSummaryFixture()],
@@ -66,7 +66,7 @@ describe('SearchPage', () => {
 
   it('names the query in its empty state instead of talking about filters', async () => {
     server.use(
-      http.get('https://api.themoviedb.org/3/search/movie', () =>
+      http.get('/api/tmdb/search/movie', () =>
         HttpResponse.json({ page: 1, results: [], total_pages: 0, total_results: 0 }),
       ),
     );
