@@ -106,4 +106,35 @@ describe('tmdbFetch', () => {
       message: 'Internal Server Error',
     });
   });
+
+  it('prefixes the proxy error code when the body carries error rather than status_message', async () => {
+    server.use(
+      http.get('/api/tmdb/movie/550', () =>
+        HttpResponse.json({ error: 'origin_not_allowed' }, { status: 403 }),
+      ),
+    );
+
+    await expect(tmdbFetch('/movie/550')).rejects.toMatchObject({
+      status: 403,
+      statusCode: undefined,
+      message: 'Proxy error: origin_not_allowed',
+    });
+  });
+
+  it('falls back to a status-only message when the body is not JSON and statusText is empty', async () => {
+    server.use(
+      // A plain Response, not HttpResponse: HttpResponse fills in a default
+      // reason phrase for the status code, masking the real-world case this
+      // guards — HTTP/2 (Vercel) responses always carry an empty statusText.
+      http.get(
+        '/api/tmdb/movie/550',
+        () => new Response('Bad gateway page', { status: 502 }),
+      ),
+    );
+
+    await expect(tmdbFetch('/movie/550')).rejects.toMatchObject({
+      status: 502,
+      message: 'Request failed (502)',
+    });
+  });
 });

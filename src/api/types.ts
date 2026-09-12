@@ -57,4 +57,6 @@ export interface TmdbMovieDetail extends TmdbMovieSummary {
 export interface TmdbErrorBody {
   status_code?: number;
   status_message?: string;
+  /** Set by the proxy in server/tmdbProxy.ts on a rejection; never sent by TMDB. */
+  error?: string;
 }

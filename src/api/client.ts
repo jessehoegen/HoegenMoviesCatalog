@@ -41,11 +41,17 @@ export async function tmdbFetch<T>(path: string, params: TmdbParams = {}): Promi
 
     try {
       const body = (await response.json()) as TmdbErrorBody;
-      message = body.status_message ?? message;
+      message =
+        body.status_message ?? (body.error ? `Proxy error: ${body.error}` : message);
       statusCode = body.status_code;
     } catch {
       // Error body was not JSON; keep the status text.
     }
+
+    // response.statusText is always "" over HTTP/2 (e.g. on Vercel), so a
+    // non-JSON body with no status_message or error would otherwise surface
+    // as a blank ErrorState.
+    if (!message) message = `Request failed (${response.status})`;
 
     throw new TmdbError(response.status, message, statusCode);
   }
