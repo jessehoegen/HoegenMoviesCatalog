@@ -5,6 +5,7 @@ import { useRegion, withRegion } from '../../app/useRegion';
 import { ErrorState } from '../../components/ErrorState';
 import { Poster } from '../../components/Poster';
 import { backdropUrl } from '../../lib/images';
+import { ListButtons } from '../lists/ListButtons';
 import { ProviderList } from './ProviderList';
 
 function MovieNotFound() {
@@ -81,6 +82,8 @@ export function MovieDetailPage() {
             {movie.runtime !== null && <span>{movie.runtime} min</span>}
             <span>{movie.vote_average.toFixed(1)} / 10</span>
           </p>
+
+          <ListButtons movie={movie} />
 
           <ul className="mt-3 flex flex-wrap gap-2">
             {movie.genres.map((genre) => (

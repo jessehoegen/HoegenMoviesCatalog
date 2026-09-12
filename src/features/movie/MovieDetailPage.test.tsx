@@ -4,7 +4,10 @@ import { screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom';
 import { server } from '../../test/server';
 import { providersFixture, regionsFixture } from '../../test/fixtures';
+import { signedIn } from '../../test/auth';
+import { restUrl } from '../../test/supabase';
 import { renderWithProviders } from '../../test/utils';
+import type { AuthState } from '../auth/useSession';
 import type { TmdbMovieDetail } from '../../api/types';
 import { MovieDetailPage } from './MovieDetailPage';
 
@@ -27,7 +30,7 @@ function detailFixture(overrides: Partial<TmdbMovieDetail> = {}): TmdbMovieDetai
   };
 }
 
-function renderDetail(route: string) {
+function renderDetail(route: string, auth?: AuthState) {
   server.use(
     http.get('/api/tmdb/watch/providers/regions', () =>
       HttpResponse.json({ results: regionsFixture }),
@@ -38,7 +41,7 @@ function renderDetail(route: string) {
     <Routes>
       <Route path="/movie/:id" element={<MovieDetailPage />} />
     </Routes>,
-    { route },
+    { route, auth },
   );
 }
 
@@ -134,5 +137,19 @@ describe('MovieDetailPage', () => {
     renderDetail('/movie/abc?region=NL');
 
     expect(await screen.findByText(/we could not find that movie/i)).toBeInTheDocument();
+  });
+
+  it('still shows the movie when the lists cannot be loaded', async () => {
+    server.use(
+      http.get('/api/tmdb/movie/550', () => HttpResponse.json(detailFixture())),
+      http.get(restUrl('movie_entries'), () =>
+        HttpResponse.json({ message: 'Service Unavailable' }, { status: 503 }),
+      ),
+    );
+
+    renderDetail('/movie/550?region=NL', signedIn);
+
+    expect(await screen.findByText("Couldn't load your lists.")).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Fight Club' })).toBeInTheDocument();
   });
 });
