@@ -14,6 +14,11 @@ describe('safeNext', () => {
     ['a backslash trick', '/\\evil.example'],
     ['a script URL', 'javascript:alert(1)'],
     ['a relative path', 'movie/550'],
+    // Browsers drop tabs and newlines anywhere in a URL, so each of these
+    // reads as another host once they're gone.
+    ['a tab before another host', '/\t/evil.example'],
+    ['a newline before another host', '/\n/evil.example'],
+    ['a tab before the backslash trick', '/\t\\evil.example'],
   ])('falls back to /browse for %s', (_label, raw) => {
     expect(safeNext(raw)).toBe('/browse');
   });
