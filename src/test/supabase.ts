@@ -1,4 +1,5 @@
 import type { AppUser } from '../features/auth/useSession';
+import type { MovieEntryRow } from '../features/lists/api';
 import { testUser } from './auth';
 
 /** Must match VITE_SUPABASE_URL in vite.config.ts's test block. */
@@ -44,5 +45,21 @@ export function sessionResponse(user: AppUser = testUser) {
       user_metadata: {},
       created_at: '2026-09-12T00:00:00Z',
     },
+  };
+}
+
+/** A movie_entries row as PostgREST returns it: Fight Club on testUser's wishlist. */
+export function entryRow(overrides: Partial<MovieEntryRow> = {}): MovieEntryRow {
+  return {
+    user_id: testUser.id,
+    movie_id: 550,
+    is_favorite: false,
+    status: 'wishlist',
+    title: 'Fight Club',
+    poster_path: '/poster.jpg',
+    release_date: '1999-10-15',
+    vote_average: 8.4,
+    updated_at: '2026-09-12T10:00:00Z',
+    ...overrides,
   };
 }

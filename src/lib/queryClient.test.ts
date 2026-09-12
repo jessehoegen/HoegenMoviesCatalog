@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TmdbError } from '../api/client';
+import { ListsError } from '../features/lists/api';
 import { shouldRetry } from './queryClient';
 
 describe('shouldRetry', () => {
@@ -21,5 +22,18 @@ describe('shouldRetry', () => {
 
   it('retries non-TMDB errors such as network failures', () => {
     expect(shouldRetry(0, new TypeError('Failed to fetch'))).toBe(true);
+  });
+
+  it('does not retry a lists request the database refused', () => {
+    expect(shouldRetry(0, new ListsError(403, 'new row violates row-level security policy'))).toBe(
+      false,
+    );
+    expect(shouldRetry(0, new ListsError(400, 'violates check constraint'))).toBe(false);
+  });
+
+  it('retries a lists request that got no response or a 5xx', () => {
+    expect(shouldRetry(0, new ListsError(0, 'TypeError: fetch failed'))).toBe(true);
+    expect(shouldRetry(1, new ListsError(503, 'Service Unavailable'))).toBe(true);
+    expect(shouldRetry(2, new ListsError(503, 'Service Unavailable'))).toBe(false);
   });
 });
