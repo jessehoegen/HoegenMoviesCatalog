@@ -3,6 +3,7 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { HeaderSearch } from './HeaderSearch';
 import { RegionPicker } from './RegionPicker';
 import { useRegion, withRegion } from './useRegion';
+import { AccountNav } from './AccountNav';
 
 export function Layout() {
   const { region } = useRegion();
@@ -19,6 +20,7 @@ export function Layout() {
             <HeaderSearch />
           </div>
           <RegionPicker />
+          <AccountNav region={region} />
         </div>
       </header>
 

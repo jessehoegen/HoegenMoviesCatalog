@@ -7,6 +7,8 @@ import { server } from '../test/server';
 import { regionsFixture } from '../test/fixtures';
 import { renderWithProviders } from '../test/utils';
 import { Layout } from './Layout';
+import { authLoading, signedIn } from '../test/auth';
+import type { AuthState } from '../features/auth/useSession';
 
 function LocationProbe() {
   const location = useLocation();
@@ -39,7 +41,7 @@ function mockRegions() {
   );
 }
 
-function renderShell(route: string) {
+function renderShell(route: string, auth?: AuthState) {
   mockRegions();
 
   return renderWithProviders(
@@ -48,9 +50,10 @@ function renderShell(route: string) {
         <Route path="/browse" element={<LocationProbe />} />
         <Route path="/search" element={<SearchRoute />} />
         <Route path="/movie/:id" element={<LocationProbe />} />
+        <Route path="/sign-in" element={<LocationProbe />} />
       </Route>
     </Routes>,
-    { route },
+    { route, auth },
   );
 }
 
@@ -141,5 +144,40 @@ describe('Layout', () => {
     await settleDebounce();
 
     expect(screen.getByTestId('location')).toHaveTextContent('/browse?region=NL');
+  });
+});
+
+describe('Layout account links', () => {
+  it('offers visitors a sign-in link that comes back to this page', () => {
+    renderShell('/browse?region=NL');
+
+    expect(screen.getByRole('link', { name: 'Sign in' }).getAttribute('href')).toContain(
+      '/sign-in?next=%2Fbrowse%3Fregion%3DNL',
+    );
+  });
+
+  it('shows My lists and Account once signed in', () => {
+    renderShell('/browse?region=NL', signedIn);
+
+    expect(screen.getByRole('link', { name: 'My lists' }).getAttribute('href')).toBe(
+      '/lists?region=NL',
+    );
+    expect(screen.getByRole('link', { name: 'Account' }).getAttribute('href')).toBe(
+      '/account?region=NL',
+    );
+    expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
+  });
+
+  it('shows nothing while the session is loading, so "Sign in" never flashes', () => {
+    renderShell('/browse?region=NL', authLoading);
+
+    expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'My lists' })).not.toBeInTheDocument();
+  });
+
+  it('hides the sign-in link on the sign-in page itself', () => {
+    renderShell('/sign-in?next=%2Flists&region=NL');
+
+    expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
   });
 });
