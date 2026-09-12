@@ -4,12 +4,18 @@ import { TmdbError } from '../api/client';
 import { ErrorState } from './ErrorState';
 
 describe('ErrorState', () => {
-  it('gives a setup-specific message for 401', () => {
+  it('tells a visitor the server is misconfigured on 401, and tells the operator where the token lives', () => {
     render(
       <ErrorState error={new TmdbError(401, 'Invalid API key.')} onRetry={vi.fn()} />,
     );
 
-    expect(screen.getByText(/VITE_TMDB_TOKEN/)).toBeInTheDocument();
+    // A visitor cannot fix a 401, so the message must not imply they can.
+    expect(screen.getByText(/isn't something you can fix/i)).toBeInTheDocument();
+    // The operator is pointed at the Vercel variable, not a local file.
+    expect(screen.getByText(/TMDB_TOKEN/)).toBeInTheDocument();
+    expect(screen.getByText(/Vercel/)).toBeInTheDocument();
+    expect(screen.queryByText(/\.env/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/VITE_/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /try again/i })).not.toBeInTheDocument();
   });
 

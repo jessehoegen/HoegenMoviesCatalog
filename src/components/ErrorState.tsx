@@ -6,16 +6,19 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({ error, onRetry }: ErrorStateProps) {
-  // A 401 is a setup problem, not a runtime one. A generic "something went
-  // wrong" here costs an hour on first run.
+  // A 401 means the server's TMDB token is missing or wrong. A visitor can do
+  // nothing about that, so say so plainly, and tell the operator where the
+  // token lives.
   if (error instanceof TmdbError && error.status === 401) {
     return (
       <div className="py-16 text-center">
-        <p className="text-neutral-300">TMDB rejected the API token.</p>
+        <p className="text-neutral-300">
+          Movie data is unavailable because this site is misconfigured. This isn't
+          something you can fix from here.
+        </p>
         <p className="mt-1 text-sm text-neutral-500">
-          Check that <code className="text-neutral-300">VITE_TMDB_TOKEN</code> is set in
-          your <code className="text-neutral-300">.env</code> file, then restart the dev
-          server.
+          Site owner: set <code className="text-neutral-300">TMDB_TOKEN</code> in the
+          Vercel project's environment variables, then redeploy.
         </p>
       </div>
     );
