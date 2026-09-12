@@ -468,7 +468,7 @@ Run: `npm run lint`
 Expected: no errors.
 
 Run: `npm test`
-Expected: `Test Files  16 passed (16)` and `Tests  104 passed (104)` — the original 90 plus 14 new.
+Expected at the time this task was implemented: `Test Files  16 passed (16)` and `Tests  104 passed (104)` — the original 90 plus 14 new. (The final whole-branch review's F1–F4 fixes later added 12 more test cases to these same files, bringing the repo's current total to 116 — see the note after Task 5.)
 
 - [ ] **Step 8: Format and commit**
 
@@ -626,7 +626,7 @@ The `test` block becomes:
 - [ ] **Step 6: Verify**
 
 Run: `npm test`
-Expected: `Tests  104 passed (104)`. No assertions other than the replaced first test changed.
+Expected at the time this task was implemented: `Tests  104 passed (104)`. No assertions other than the replaced first test changed. (Current total: 116 — see the note after Task 5.)
 
 Run: `grep -rn "VITE_TMDB_TOKEN\|import.meta.env\|Bearer" src/api vite.config.ts`
 Expected: no output. The browser-side API code no longer reads any token or builds any auth header. (`src/components/ErrorState*` still name `VITE_TMDB_TOKEN`; Task 3 fixes that.)
@@ -824,7 +824,7 @@ Run: `grep -rn "VITE_TMDB_TOKEN" --exclude-dir=node_modules --exclude-dir=docs -
 Expected: no matching lines, then `exit 1` (grep found nothing). The `docs/` specs and plans keep the old name as history.
 
 Run: `npm test && npx tsc -b && npm run lint`
-Expected: `Tests  104 passed (104)`, no type or lint errors.
+Expected at the time this task was implemented: `Tests  104 passed (104)`, no type or lint errors. (Current total: 116 — see the note after Task 5.)
 
 - [ ] **Step 9: Format and commit**
 
@@ -953,11 +953,17 @@ curl -s -H "Sec-Fetch-Site: same-origin" \
 
 ```bash
 npm run build
-prefix=$(sed -n 's/^TMDB_TOKEN=//p' .env | cut -c1-24)
-if [ -z "$prefix" ]; then echo "TMDB_TOKEN is empty in .env — cannot check";
-elif grep -rqF "$prefix" dist; then echo "LEAK: token found in dist/";
+token=$(sed -n 's/^TMDB_TOKEN=//p' .env | tr -d "\"'")
+suffix=${token: -24}
+if [ -z "$suffix" ]; then echo "TMDB_TOKEN is empty in .env — cannot check";
+elif grep -rqF "$suffix" dist; then echo "LEAK: token found in dist/";
 else echo "clean: token not in dist/"; fi
 ```
+
+TMDB read tokens are JWTs, whose first 24 characters are the shared JWT
+header — identical for every TMDB token, so matching on a prefix could pass
+or fail regardless of which token is actually in `dist/`. The last 24
+characters are unique to this token, so a match there is a real leak.
 
 Expected: `clean: token not in dist/`
 
@@ -989,8 +995,34 @@ curl -s -H "Sec-Fetch-Site: same-origin" https://<prod>/api/tmdb/account
 
 curl -s -o /dev/null -w "%{http_code}\n" https://<prod>/api/unknown
 # Expected: 404 (not the app's index.html)
+
+curl -s -o /dev/null -w "%{http_code}\n" -H "Referer: https://<prod>/browse" https://<prod>/api/tmdb/movie/550
+# Expected: 200
+
+curl -s -o /dev/null -w "%{http_code}\n" -H "Referer: https://evil.example/" https://<prod>/api/tmdb/movie/550
+# Expected: 403
 ```
+
+The last two checks exercise the Referer fallback, which no browser check above reaches — modern browsers always send `Sec-Fetch-Site`. A 403 on the first of the two means Vercel's system environment variables
+(`VERCEL_PROJECT_PRODUCTION_URL`) are not reaching the function — check
+"Automatically expose System Environment Variables" in the project settings.
 
 👤 USER: open `https://<prod>` and repeat Step 5's browser checks.
 
 When every check passes, the project is done: the app is public and the token stays on the server.
+
+---
+
+### Note: final whole-branch review fixes (2026-09-12)
+
+A review found four code issues, fixed in follow-up commits: a blank error
+message when the proxy or platform rejects a request (F1, `src/api/client.ts`
+and `src/api/types.ts`), the Referer fallback being reachable even when
+`Sec-Fetch-Site` explicitly says `cross-site` (F2, `server/tmdbProxy.ts`), an
+unhandled upstream `fetch` failure crashing the handler instead of returning
+502 (F3, `server/tmdbProxy.ts`), and additional allowlist-bypass regression
+tests (F4, `server/tmdbProxy.test.ts`). These added 12 test cases across
+`src/api/client.test.ts` and `server/tmdbProxy.test.ts`, bringing the suite
+from the 104 tests referenced earlier in this plan to **116**. Task 5's Step 4
+and Step 7 above already reflect this review's other two fixes (the leak
+check's last-24-characters comparison, and the Referer-fallback curl checks).
