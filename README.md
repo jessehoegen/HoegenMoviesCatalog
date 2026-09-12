@@ -3,6 +3,8 @@
 Browse movies by what is currently streaming on subscription services in a given
 region, using the [TMDB API](https://developer.themoviedb.org/docs/getting-started).
 
+App to search movies catalog, favorite movies, wash list etc..
+
 ## Setup
 
 ```bash
