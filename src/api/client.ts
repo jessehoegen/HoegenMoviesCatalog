@@ -1,6 +1,10 @@
 import type { TmdbErrorBody } from './types';
 
-const BASE_URL = 'https://api.themoviedb.org/3';
+// The same-origin proxy (api/tmdb.ts, server-side) adds the TMDB token. The
+// browser never holds it, so nothing here sends an Authorization header.
+// Despite the similar name, this file is browser code, unrelated to the root
+// api/ directory.
+const BASE_URL = '/api/tmdb';
 
 export type TmdbParams = Record<string, string | number | undefined>;
 
@@ -17,7 +21,8 @@ export class TmdbError extends Error {
 }
 
 export async function tmdbFetch<T>(path: string, params: TmdbParams = {}): Promise<T> {
-  const url = new URL(BASE_URL + path);
+  // BASE_URL is relative, and new URL() rejects a relative URL without a base.
+  const url = new URL(BASE_URL + path, window.location.origin);
 
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined || value === '') continue;
@@ -25,10 +30,7 @@ export async function tmdbFetch<T>(path: string, params: TmdbParams = {}): Promi
   }
 
   const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${import.meta.env.VITE_TMDB_TOKEN}`,
-      accept: 'application/json',
-    },
+    headers: { accept: 'application/json' },
   });
 
   // fetch does not reject on 4xx/5xx. Without this check a failed request

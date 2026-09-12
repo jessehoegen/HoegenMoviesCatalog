@@ -4,12 +4,12 @@ import { server } from '../test/server';
 import { TmdbError, tmdbFetch } from './client';
 
 describe('tmdbFetch', () => {
-  it('requests the TMDB base URL with a bearer token', async () => {
+  it('calls the same-origin proxy and sends no Authorization header', async () => {
     let seenUrl = '';
-    let seenAuth: string | null = null;
+    let seenAuth: string | null | undefined;
 
     server.use(
-      http.get('https://api.themoviedb.org/3/movie/550', ({ request }) => {
+      http.get('/api/tmdb/movie/550', ({ request }) => {
         seenUrl = request.url;
         seenAuth = request.headers.get('Authorization');
         return HttpResponse.json({ id: 550 });
@@ -19,15 +19,16 @@ describe('tmdbFetch', () => {
     const data = await tmdbFetch<{ id: number }>('/movie/550');
 
     expect(data).toEqual({ id: 550 });
-    expect(seenUrl).toBe('https://api.themoviedb.org/3/movie/550');
-    expect(seenAuth).toBe('Bearer test-token');
+    expect(seenUrl).toBe(`${window.location.origin}/api/tmdb/movie/550`);
+    // The property this project exists for: the browser holds no token.
+    expect(seenAuth).toBeNull();
   });
 
   it('serialises params and omits undefined and empty values', async () => {
     let seenParams: URLSearchParams | undefined;
 
     server.use(
-      http.get('https://api.themoviedb.org/3/discover/movie', ({ request }) => {
+      http.get('/api/tmdb/discover/movie', ({ request }) => {
         seenParams = new URL(request.url).searchParams;
         return HttpResponse.json({
           page: 1,
@@ -53,7 +54,7 @@ describe('tmdbFetch', () => {
 
   it('throws TmdbError with TMDB status_message on 401', async () => {
     server.use(
-      http.get('https://api.themoviedb.org/3/movie/550', () =>
+      http.get('/api/tmdb/movie/550', () =>
         HttpResponse.json(
           { status_code: 7, status_message: 'Invalid API key.' },
           { status: 401 },
@@ -71,7 +72,7 @@ describe('tmdbFetch', () => {
 
   it('throws TmdbError on 404 rather than resolving', async () => {
     server.use(
-      http.get('https://api.themoviedb.org/3/movie/999999999', () =>
+      http.get('/api/tmdb/movie/999999999', () =>
         HttpResponse.json(
           {
             status_code: 34,
@@ -88,7 +89,7 @@ describe('tmdbFetch', () => {
   it('falls back to the status text when the error body is not JSON', async () => {
     server.use(
       http.get(
-        'https://api.themoviedb.org/3/movie/550',
+        '/api/tmdb/movie/550',
         () =>
           new HttpResponse('upstream exploded', {
             status: 500,
