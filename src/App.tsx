@@ -6,6 +6,7 @@ import { SignInPage } from './features/auth/SignInPage';
 import { BrowsePage } from './features/browse/BrowsePage';
 import { MovieDetailPage } from './features/movie/MovieDetailPage';
 import { SearchPage } from './features/search/SearchPage';
+import { ListsPage } from './features/lists/ListsPage';
 
 function NotFound() {
   const { region } = useRegion();
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/movie/:id" element={<MovieDetailPage />} />
         <Route path="/sign-in" element={<SignInPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/lists" element={<ListsPage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

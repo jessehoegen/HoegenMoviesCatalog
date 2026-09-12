@@ -18,6 +18,8 @@ interface MovieGridProps {
   onClearFilters?: () => void;
   /** Replaces the browse empty state, which talks about filters. */
   emptyState?: ReactNode;
+  /** For lists that are complete by nature, where "End of results." reads oddly. */
+  hideEndOfResults?: boolean;
   linkFor: (movie: TmdbMovieSummary) => string;
 }
 
@@ -77,6 +79,7 @@ export function MovieGrid({
   onRetry,
   onClearFilters,
   emptyState,
+  hideEndOfResults = false,
   linkFor,
 }: MovieGridProps) {
   // `status` describes the first page only: a later page failing leaves it
@@ -96,7 +99,9 @@ export function MovieGrid({
       </ul>
 
       {!hasNextPage ? (
-        <p className="py-8 text-center text-sm text-neutral-500">End of results.</p>
+        hideEndOfResults ? null : (
+          <p className="py-8 text-center text-sm text-neutral-500">End of results.</p>
+        )
       ) : isFetchNextPageError ? (
         // LoadMoreButton is unmounted rather than disabled: its
         // IntersectionObserver would otherwise re-observe a sentinel that is

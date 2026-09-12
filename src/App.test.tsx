@@ -3,6 +3,8 @@ import { http, HttpResponse } from 'msw';
 import { screen } from '@testing-library/react';
 import { server } from './test/server';
 import { regionsFixture } from './test/fixtures';
+import { signedIn } from './test/auth';
+import { restUrl } from './test/supabase';
 import { renderWithProviders } from './test/utils';
 import App from './App';
 
@@ -36,5 +38,18 @@ describe('App routing', () => {
 
     expect(screen.getByRole('link', { name: /streaming catalog/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Sign in' })).toBeInTheDocument();
+  });
+
+  it('serves My lists inside the layout', async () => {
+    server.use(
+      http.get('/api/tmdb/watch/providers/regions', () =>
+        HttpResponse.json({ results: regionsFixture }),
+      ),
+      http.get(restUrl('movie_entries'), () => HttpResponse.json([])),
+    );
+
+    renderWithProviders(<App />, { route: '/lists?region=NL', auth: signedIn });
+
+    expect(await screen.findByRole('heading', { name: 'My lists' })).toBeInTheDocument();
   });
 });
