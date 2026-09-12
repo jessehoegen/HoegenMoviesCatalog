@@ -52,19 +52,36 @@ export async function exchangeCode(code: string): Promise<ExchangeResult> {
 }
 
 /**
- * Ends the session in this browser. True when this browser's session is
- * gone, whether or not the request to Supabase succeeded: for most failures
- * (anything but 401/403/404) supabase-js still clears the local session
- * before reporting the error, so the error alone doesn't mean the session
- * survived. False only when the session is still there.
+ * Ends the session in this browser. True only when supabase-js removed this
+ * browser's stored session during the call; false means it is still stored.
+ *
+ * The error supabase-js returns doesn't settle that on its own:
+ * - When the logout request fails with a server or network error, supabase-js
+ *   removes the session first and then reports the error. Signed out: true.
+ * - When the access token has expired and refreshing it gets no answer
+ *   (offline, or the project is paused), supabase-js gives up before the
+ *   logout request and keeps the session, which auto-refresh revives once the
+ *   connection returns. getSession() reports no session here, so it can't be
+ *   trusted to tell the two apart. Still signed in: false.
+ *
+ * supabase-js removes a stored session in exactly one place, and that place
+ * always announces SIGNED_OUT. So this listens for SIGNED_OUT while signing out.
  */
 export async function signOut(): Promise<boolean> {
-  // 'local': this browser only. Other devices stay signed in.
-  const { error } = await supabase.auth.signOut({ scope: 'local' });
-  if (!error) return true;
+  let sessionRemoved = false;
+  const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+    if (event === 'SIGNED_OUT') sessionRemoved = true;
+  });
 
-  const { data } = await supabase.auth.getSession();
-  return data.session === null;
+  try {
+    // 'local': this browser only. Other devices stay signed in.
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    // supabase-js waits for every listener before signOut() returns, so a
+    // removal during the call has been seen by now.
+    return !error || sessionRemoved;
+  } finally {
+    listener.subscription.unsubscribe();
+  }
 }
 
 /**

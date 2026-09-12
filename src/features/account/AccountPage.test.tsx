@@ -1,12 +1,18 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
-import { screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { server } from '../../test/server';
 import { regionsFixture } from '../../test/fixtures';
 import { signedIn, signedOut, testUser } from '../../test/auth';
-import { authUrl, entryRow, restUrl, sessionResponse } from '../../test/supabase';
+import {
+  AUTH_STORAGE_KEY,
+  authUrl,
+  entryRow,
+  restUrl,
+  sessionResponse,
+} from '../../test/supabase';
 import { renderWithProviders } from '../../test/utils';
 import { exchangeCode, sendMagicLink } from '../auth/authApi';
 import type { AuthState } from '../auth/useSession';
@@ -86,6 +92,44 @@ describe('AccountPage', () => {
 
     expect(await screen.findByTestId('location')).toHaveTextContent('/browse?region=NL');
     expect(queryClient.getQueryData(listsKeys.all(testUser.id))).toBeUndefined();
+    expect(localStorage.getItem(AUTH_STORAGE_KEY)).toBeNull();
+  });
+
+  it('says so, and keeps the lists cached, when the session survives sign-out', async () => {
+    // A real, expired session whose refresh gets no answer (offline, or the
+    // project is paused). supabase-js keeps the session stored in that case,
+    // so this browser is still signed in and the page must say so.
+    server.use(
+      http.post(authUrl('otp'), () => HttpResponse.json({})),
+      http.post(authUrl('token'), ({ request }) =>
+        new URL(request.url).searchParams.get('grant_type') === 'refresh_token'
+          ? HttpResponse.error()
+          : HttpResponse.json({
+              ...sessionResponse(),
+              expires_at: Math.floor(Date.now() / 1000) - 60,
+            }),
+      ),
+    );
+    await sendMagicLink('reader@example.com', '/account');
+    await exchangeCode('code-from-the-email');
+    const { queryClient } = renderAccount();
+
+    // supabase-js retries the refresh for up to 30 seconds; fake timers skip
+    // the wait. fireEvent, because userEvent waits on the (now fake) clock.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+    try {
+      fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+      for (let second = 0; second < 60 && !screen.queryByRole('alert'); second += 1) {
+        await act(() => vi.advanceTimersByTimeAsync(1000));
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(screen.getByRole('alert')).toHaveTextContent("Couldn't sign out. Try again.");
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeEnabled();
+    expect(queryClient.getQueryData(listsKeys.all(testUser.id))).toEqual([entryRow()]);
+    expect(localStorage.getItem(AUTH_STORAGE_KEY)).not.toBeNull();
   });
 
   it('asks for confirmation before deleting, and can be cancelled', async () => {

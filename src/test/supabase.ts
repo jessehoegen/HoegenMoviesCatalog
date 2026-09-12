@@ -1,9 +1,34 @@
+import { vi } from 'vitest';
 import type { AppUser } from '../features/auth/useSession';
 import type { MovieEntryRow } from '../features/lists/api';
 import { testUser } from './auth';
 
 /** Must match VITE_SUPABASE_URL in vite.config.ts's test block. */
 export const SUPABASE_URL = 'https://test.supabase.co';
+
+/**
+ * Where supabase-js keeps the session in localStorage: "sb-" + the first part
+ * of the project's host name + "-auth-token". Lets a test check that signing
+ * out really removed it.
+ */
+export const AUTH_STORAGE_KEY = 'sb-test-auth-token';
+
+/**
+ * Waits for a promise while moving fake timers forward, one second at a time,
+ * up to a minute. For supabase-js's refresh retries, which would otherwise take
+ * up to 30 real seconds. Call vi.useFakeTimers() before this.
+ */
+export async function settleWithFakeTimers<T>(promise: Promise<T>): Promise<T> {
+  let settled = false;
+  promise.then(
+    () => (settled = true),
+    () => (settled = true),
+  );
+  for (let second = 0; second < 60 && !settled; second += 1) {
+    await vi.advanceTimersByTimeAsync(1000);
+  }
+  return promise;
+}
 
 /** A PostgREST URL, e.g. restUrl('movie_entries'). MSW ignores the query string. */
 export function restUrl(path: string): string {

@@ -1,8 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { supabase } from '../../lib/supabase';
 import { server } from '../../test/server';
-import { authUrl, restUrl, sessionResponse } from '../../test/supabase';
+import {
+  AUTH_STORAGE_KEY,
+  authUrl,
+  restUrl,
+  sessionResponse,
+  settleWithFakeTimers,
+} from '../../test/supabase';
 import { deleteMyAccount, exchangeCode, sendMagicLink, signOut } from './authApi';
 
 /** Supabase Auth's error body shape, as observed from supabase-js 2.116. */
@@ -111,6 +117,7 @@ describe('signOut', () => {
     );
 
     expect(await signOut()).toBe(true);
+    expect(localStorage.getItem(AUTH_STORAGE_KEY)).toBeNull();
   });
 
   it('still reports success when the logout request fails but Supabase clears the session anyway', async () => {
@@ -130,6 +137,51 @@ describe('signOut', () => {
 
     expect(await signOut()).toBe(true);
     expect((await supabase.auth.getSession()).data.session).toBeNull();
+    expect(localStorage.getItem(AUTH_STORAGE_KEY)).toBeNull();
+  });
+
+  it('reports failure, and keeps the session, when an expired session cannot be refreshed', async () => {
+    // The access token has expired and refreshing it gets no answer (offline,
+    // or the free-tier project is paused). supabase-js then gives up before
+    // the logout request and leaves the session stored, where auto-refresh
+    // would revive it once the connection returns. That is not signed out.
+    let logoutCalls = 0;
+    let refreshCalls = 0;
+    server.use(
+      http.post(authUrl('otp'), () => HttpResponse.json({})),
+      // One endpoint serves both grants: the code exchange (grant_type=pkce)
+      // gets a session that expired a minute ago, and every refresh
+      // (grant_type=refresh_token) fails as a network error.
+      http.post(authUrl('token'), ({ request }) => {
+        if (new URL(request.url).searchParams.get('grant_type') === 'refresh_token') {
+          refreshCalls += 1;
+          return HttpResponse.error();
+        }
+        return HttpResponse.json({
+          ...sessionResponse(),
+          expires_at: Math.floor(Date.now() / 1000) - 60,
+        });
+      }),
+      http.post(authUrl('logout'), () => {
+        logoutCalls += 1;
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    await sendMagicLink('reader@example.com', '/account');
+    await exchangeCode('code-from-the-email');
+    expect(localStorage.getItem(AUTH_STORAGE_KEY)).not.toBeNull();
+
+    // supabase-js retries a failing refresh for up to 30 seconds. Fake
+    // timers let the test skip that wait instead of sitting through it.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+    try {
+      expect(await settleWithFakeTimers(signOut())).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(localStorage.getItem(AUTH_STORAGE_KEY)).not.toBeNull();
+    expect(refreshCalls).toBeGreaterThan(0);
+    expect(logoutCalls).toBe(0);
   });
 });
 
