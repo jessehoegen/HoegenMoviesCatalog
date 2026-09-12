@@ -88,6 +88,14 @@ describe('handleTmdbProxy', () => {
     '/api/tmdb/movie/abc',
     '/api/tmdb?tmdb_path=account',
     '/api/tmdb',
+    '/api/tmdb/movie%2F550',
+    '/api/tmdb//movie/550',
+    '/api/tmdb/movie/550/%2e%2e/%2e%2e/account',
+    '/api/tmdb?tmdb_path=//evil.example/movie/550',
+    '/api/tmdb?tmdb_path=/movie/550',
+    '/api/tmdb?tmdb_path=movie/550%3Fapi_key%3Dx',
+    '/api/tmdb?tmdb_path=account&tmdb_path=movie/550',
+    '/api/tmdbx/movie/550',
   ])('rejects %s with 404 without contacting TMDB', async (pathAndQuery) => {
     const calls = recordTmdbCalls();
 
@@ -105,6 +113,13 @@ describe('handleTmdbProxy', () => {
     [
       'a cross-site fetch',
       { 'Sec-Fetch-Site': 'cross-site', Referer: 'https://evil.example/page' },
+    ],
+    [
+      'a cross-site fetch carrying the production Referer',
+      {
+        'Sec-Fetch-Site': 'cross-site',
+        Referer: 'https://movie-catalog.vercel.app/browse',
+      },
     ],
   ])(
     'rejects a request with %s with 403 without contacting TMDB',
@@ -139,6 +154,17 @@ describe('handleTmdbProxy', () => {
       expect(response.status).toBe(200);
     },
   );
+
+  it('returns 502 with a distinct error code when the upstream fetch throws, instead of crashing', async () => {
+    server.use(
+      http.get('https://api.themoviedb.org/3/movie/550', () => HttpResponse.error()),
+    );
+
+    const response = await handleTmdbProxy(proxyRequest('/api/tmdb/movie/550'), env);
+
+    expect(response.status).toBe(502);
+    expect(await response.json()).toEqual({ error: 'upstream_unreachable' });
+  });
 
   // Regression guard: the client's 401 message, not-found page, retry policy,
   // and TmdbError all depend on TMDB's own status and body arriving intact.

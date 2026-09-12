@@ -45,12 +45,20 @@ export async function handleTmdbProxy(
     if (key !== PATH_PARAM) upstreamUrl.searchParams.append(key, value);
   }
 
-  const upstream = await fetch(upstreamUrl, {
-    headers: {
-      Authorization: `Bearer ${env.TMDB_TOKEN}`,
-      accept: 'application/json',
-    },
-  });
+  let upstream: Response;
+  try {
+    upstream = await fetch(upstreamUrl, {
+      headers: {
+        Authorization: `Bearer ${env.TMDB_TOKEN}`,
+        accept: 'application/json',
+      },
+    });
+  } catch {
+    // Network failure, DNS failure, TMDB unreachable, etc. Without this catch,
+    // the thrown error propagates out of the Edge function as an unhandled
+    // rejection instead of a response.
+    return rejection(502, 'upstream_unreachable');
+  }
 
   // Status and body pass through untouched. The client's 401 message, 404
   // not-found page, retry policy, and TmdbError all read TMDB's own response;
@@ -68,10 +76,17 @@ export async function handleTmdbProxy(
 // would reject all legitimate traffic. Sec-Fetch-Site is a forbidden header
 // name, so page scripts cannot forge it. Non-browser clients can — see the
 // spec's accepted risks.
+//
+// The Referer fallback below only runs when Sec-Fetch-Site is absent. A
+// present-but-wrong value (e.g. "cross-site") is a definitive verdict from
+// the browser and must not be second-guessed by a Referer that a cross-site
+// request can carry too (e.g. a stale or forged one).
 function isAllowedOrigin(request: Request, env: ProxyEnv): boolean {
-  if (request.headers.get('sec-fetch-site') === 'same-origin') return true;
+  const secFetchSite = request.headers.get('sec-fetch-site');
+  if (secFetchSite === 'same-origin') return true;
+  if (secFetchSite !== null) return false;
 
-  // Fallback for browsers that omit Sec-Fetch-Site.
+  // Fallback for browsers that omit Sec-Fetch-Site entirely.
   const referer = request.headers.get('referer');
   if (!referer) return false;
 
@@ -111,8 +126,8 @@ function extractTmdbPath(url: URL): string | null {
 // Shaped differently from TMDB's { status_code, status_message } on purpose, so
 // "the proxy blocked this" is distinguishable from "TMDB said no".
 function rejection(
-  status: 403 | 404,
-  error: 'origin_not_allowed' | 'path_not_allowed',
+  status: 403 | 404 | 502,
+  error: 'origin_not_allowed' | 'path_not_allowed' | 'upstream_unreachable',
 ): Response {
   return new Response(JSON.stringify({ error }), {
     status,
