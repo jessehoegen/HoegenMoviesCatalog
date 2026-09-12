@@ -73,6 +73,11 @@ One-time Supabase setup:
 1. Create a project at https://supabase.com (the free plan is enough).
 2. In the SQL editor, paste and run
    `supabase/migrations/20260912000000_accounts_and_lists.sql`.
+
+   Supabase's Security Advisor will probably flag `delete_my_account` as a
+   security-definer function that `authenticated` can call. That is
+   intended: it only ever deletes the caller's own account (`auth.uid()`).
+   Don't "fix" it.
 3. In **Authentication → URL Configuration**, set the Site URL to the
    production address and add these Redirect URLs:
    - `https://hoegen-movies-catalog.vercel.app/**`
@@ -86,6 +91,10 @@ One-time Supabase setup:
 
 4. Copy the project URL and publishable key from **Project Settings → API
    Keys** into `.env` and into Vercel (see **Deployment**).
+5. Don't skip this check: sign in with a test account and delete it for real
+   from the Account page, then confirm it's gone from **Authentication →
+   Users**. The PGlite tests can't prove that the real project's `postgres`
+   owner is allowed to delete from `auth.users`. Only this check can.
 
 **Until a custom email provider is set up, magic links only reach members of
 the Supabase project's team, at most 2 per hour.** That is Supabase's built-in
