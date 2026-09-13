@@ -19,6 +19,15 @@ describe('safeNext', () => {
     ['a tab before another host', '/\t/evil.example'],
     ['a newline before another host', '/\n/evil.example'],
     ['a tab before the backslash trick', '/\t\\evil.example'],
+    // A leading dot segment collapses away when the URL parser normalizes the
+    // path, turning what looks like a same-site path into "//evil.example".
+    ['a dot segment before another host', '/.//evil.example'],
+    ['a double-dot segment before another host', '/..//evil.example'],
+    ['a nested double-dot segment before another host', '/a/..//evil.example'],
+    ['a percent-encoded dot segment before another host', '/%2e//evil.example'],
+    ['a percent-encoded double-dot segment before another host', '/%2E%2E//evil.example'],
+    ['a dot segment before the backslash trick', '/./\\evil.example'],
+    ['a dot segment before a tab and another host', '/./\t/evil.example'],
   ])('falls back to /browse for %s', (_label, raw) => {
     expect(safeNext(raw)).toBe('/browse');
   });

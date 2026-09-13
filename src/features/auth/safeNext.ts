@@ -13,6 +13,12 @@ const BASE = 'https://app.invalid';
  * hand, because that parser quietly fixes things up: it drops tabs and
  * newlines anywhere, and reads "\" as "/". "/\t/evil.example" looks like a
  * path but is "//evil.example", another host, to the browser.
+ *
+ * The result is re-checked before it's returned, not just the input: parsing
+ * also collapses "." and ".." segments, so a same-origin-looking input like
+ * "/.//evil.example" can normalize to the path "//evil.example" - which
+ * React Router and browsers alike read as a protocol-relative URL to another
+ * host, not a path on this site.
  */
 export function safeNext(raw: string | null | undefined): string {
   // A value that doesn't start with "/" isn't a path on this site: it's
@@ -32,5 +38,18 @@ export function safeNext(raw: string | null | undefined): string {
 
   // Rebuilt from the parsed parts, so the app navigates to exactly the path
   // the check above approved.
-  return url.pathname + url.search + url.hash;
+  const result = url.pathname + url.search + url.hash;
+
+  // Dot-segment normalization can turn a same-origin input into a result
+  // starting with "//" or "/\", which is a protocol-relative URL to another
+  // host, not a path on this site. Re-parse the result itself and require it
+  // still starts with exactly one "/" and still resolves to this origin.
+  if (result.startsWith('//') || result.startsWith('/\\')) return FALLBACK;
+  try {
+    if (new URL(result, BASE).origin !== BASE) return FALLBACK;
+  } catch {
+    return FALLBACK;
+  }
+
+  return result;
 }
